@@ -4,11 +4,14 @@ const db = new QuickDB();
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const {
     setActiveLocation,
+    getNewShackDataInstance,
     // updateShackData,
     // parseEmbedDescription,
     // categorizeLocation,
     // categorizeEmbed
 } = require('./dataUtilities');
+const { defaultShackData } = require('./shackDataStructure');
+
 
 function categorizeLocation(locationString) {
     const keywordToLocation = {
@@ -46,7 +49,7 @@ function parseEmbedDescription(description) {
     return data;
 }
 function updateShackData(userShackData, dataUpdates) {
-    if (!userShackData || !userShackData.info || !userShackData.location) {
+    if (!userShackData || !userShackData.info) {
         console.error("updateShackData was called with invalid userShackData structure:", userShackData);
         return;
     }
@@ -144,7 +147,19 @@ module.exports = {
                             console.log(`User ${username} not found in the database.`);
                             return;
                         } 
-                        let userShackData = await db.get(`shackData.${matchedUserId}`) || {};
+                        let userShackData = await db.get(`shackData.${matchedUserId}`) || getNewShackDataInstance();
+                        if (!userShackData) {
+                            userShackData = getNewShackDataInstance(); // Use your function to create a new instance with the default structure
+                            // Optionally save this new instance to the database if needed
+                            // await db.set(`shackData.${matchedUserId}`, userShackData);
+                        }                        
+                        console.log(`value for userShackData ${defaultShackData}`)
+                        console.log(JSON.parse(JSON.stringify(defaultShackData)))
+                        if (!userShackData) {
+                            userShackData = JSON.parse(JSON.stringify(defaultShackData)); // Deep clone
+                            // Now userShackData is a separate instance with the structure of defaultShackData
+                        }
+                        
                         console.log(`command log for ${userShackData}`)
                         // if (!userShackData) {
                         //     // Assuming defaultShackData is the default structure imported from shackDataStructure.js
