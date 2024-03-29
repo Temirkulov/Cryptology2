@@ -1,0 +1,9 @@
+25 March 2024
+First Working Application
+
+....
+
+27 March 2024
+- Added util/ files for Tacoshack and IdleCap
+- Added functioning Interaction Command Listener Methods
+- Extract data from other Bots' interaction commands
