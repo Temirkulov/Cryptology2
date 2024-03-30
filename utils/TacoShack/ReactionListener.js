@@ -89,6 +89,13 @@ module.exports = {
                             console.log(`User ${username} not found in the database.`);
                             return;
                         } 
+                        if (matchedUserId !== user.id) {
+                            console.log(`User ID mismatch: ${matchedUserId} !== ${user.id}`);
+                            message.channel.send(`User ID mismatch: ${matchedUserId} !== ${user.id}`);
+                            return;
+                        }
+
+                        
                         let shackData = await db.get(`shackData.${matchedUserId}`) || {};
                         if (!shackData) {
                             // Assuming defaultShackData is the default structure imported from shackDataStructure.js
