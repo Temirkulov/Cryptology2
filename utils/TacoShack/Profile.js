@@ -17,7 +17,7 @@ module.exports = {
             }
             const activeLocation = savedShackData.info.activeLocation;
             console.log(activeLocation);
-            const locationData = savedShackData[activeLocation]; // E.g., savedShackData.city
+            const locationData = savedShackData.location[activeLocation]; // E.g., savedShackData.city
             const avatarUrl = interaction.user.avatarURL() || interaction.user.defaultAvatarURL;
             // Assuming you have a function to create an embed from user data
             if (locationData) {

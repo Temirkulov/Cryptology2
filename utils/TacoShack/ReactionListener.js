@@ -77,26 +77,25 @@ module.exports = {
                         }
                         console.log("Extracted Shack Name:", extractedShackName);
                         const userSetupData = await db.get('shackData') || {};
+                        console.log(userSetupData)
                         const userIds = Object.keys(userSetupData);
                         const matchedUserId = userIds.find(id => 
                             userSetupData[id].info && 
-                            userSetupData[id].info.shackName === extractedShackName
+                            userSetupData[id].info.userid === user.id
                         );
                         console.log("Matched User ID:", matchedUserId);
-                        
+                        const matchedShackName = userSetupData[matchedUserId].info.shackName;
+                        console.log(matchedShackName)
                         if (!matchedUserId) {
-                            await newMessage.react('⚠️');
-                            console.log(`User ${username} not found in the database.`);
+                            await message.react('⚠️');
+                            
+                            console.log(`User ${user.username} not found in the database.`);
                             return;
                         } 
-                        if (matchedUserId !== user.id) {
-                            console.log(`User ID mismatch: ${matchedUserId} !== ${user.id}`);
-                            message.channel.send(`User ID mismatch: ${matchedUserId} !== ${user.id}`);
-                            return;
-                        }
 
                         
                         let shackData = await db.get(`shackData.${matchedUserId}`) || {};
+                        console.log(`Shack Data for ${matchedUserId}:`, shackData);
                         if (!shackData) {
                             // Assuming defaultShackData is the default structure imported from shackDataStructure.js
                             shackData = JSON.parse(JSON.stringify(defaultShackData)); // Deep clone to avoid mutating the original
@@ -145,10 +144,11 @@ module.exports = {
                                         const baseIncome = incomeMatch[1].replace(/,/g, ''); // Removes commas for conversion to number
                                         // Assuming you want to store the income as a number
                                         const locationKey = activeLocation1.toLowerCase(); // Ensure this matches your object keys accurately
-                                        if (shackData[locationKey] && shackData[locationKey].info) {
-                                            shackData[locationKey].info.income = Number(baseIncome);
+                                        if (shackData.location[locationKey] && shackData.location[locationKey].info) {
+                                            shackData.location[locationKey].info.income = Number(baseIncome);
                                         } else {
                                             console.warn(`Active location '${activeLocation1}' not found or missing info structure.`);
+                                            console.log(`location key ${shackData[locationKey]}`)
                                         }
                                     }
                                 
@@ -159,8 +159,8 @@ module.exports = {
                                     const activeLocation = shackData.info.activeLocation;
                                 
                                     // Ensure the location is valid and info structure exists
-                                    if (shackData[activeLocation] && shackData[activeLocation].info) {
-                                        shackData[activeLocation].info.balance = balance;
+                                    if (shackData.location[activeLocation] && shackData.location[activeLocation].info) {
+                                        shackData.location[activeLocation].info.balance = balance;
                                     } else {
                                         console.log(`Invalid location '${activeLocation}' or missing info structure.`);
                                     }
@@ -178,8 +178,9 @@ module.exports = {
                             }
 
                         });
-                        console.log(JSON.stringify(shackData, null, 2)); // After setting properties
-
+                        // console.log(JSON.stringify(shackData, null, 2)); // After setting properties
+                        const activeLocation = shackData.info.activeLocation;
+                        console.log(shackData.location[activeLocation])
                         // After processing all fields, save userData under a single key
                         if (Object.keys(shackData).length > 0) {
                             await db.set(`shackData.${user.id}`, shackData);

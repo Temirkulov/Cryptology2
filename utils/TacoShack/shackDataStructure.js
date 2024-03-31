@@ -209,18 +209,28 @@ const defaultShackData = {
         } },
     },
     hq: {
-        upgrades: {
-            customerService: 0,
-            foodService: 0,
+        info: {
+            hqname: "",
+            balance: 0,
+            income: 0,
+            tip: 0,
+            work: 0,
             overtime: 0,
-            lunchRush: 0,
+            lunchrush: 0,
+            taskmultiplier: 0,
+        },
+        upgrades: {
+            customerServiceDepartment: 0,
+            foodServicesDepartment: 0,
+            overtimeManagement: 0,
+            lunchRushInitiative: 0,
             taskBooster: 0,
         },
         employees: {
             secretary: 0,
             treasurer: 0,
-            ChiefFinancialOfficer: 0,
-            ChiefExecutiveOfficer: 0,
+            chiefFinancialOfficer: 0,
+            chiefExecutiveOfficer: 0,
         },
     }
 };

@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { QuickDB } = require("quick.db");
 const db = new QuickDB();
+const { defaultShackData } = require('../../utils/TacoShack/shackDataStructure');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -22,21 +23,18 @@ module.exports = {
         const userName = interaction.user.username;
 
         // Example of setting up the user data structure
-        let userData = {
-            info: {
-                username: userName, // Directly from the Discord User object
-                userid: userId,
-                shackName: "",
-                level: 0, // To be updated based on field
-                franchiseStatus: "employee", // Default status, updated based on field value
-                activeLocation: "",
-            },
-            location: {
-            }
-        };
-        
+        let userData = await db.get(`shackData.${userId}`);
+
+        // If userData doesn't exist, initialize it using your default data structure
+        if (!userData) {
+            // Assuming you have a default data structure for new users
+            // This could be defined elsewhere in your code
+            userData = JSON.parse(JSON.stringify(defaultShackData)); // Assuming defaultShackData is your default structure
+        }
+        userData.info.userid = userId;
+        userData.info.username = userName;
         // Saving the structure to the database under the user's ID
-        await db.set(`userData.${userId}`, userData);
+        await db.set(`shackData.${userId}`, userData);
 
         // Example of embedding the user's ID and username in the confirmation message
         const embed = new EmbedBuilder()
