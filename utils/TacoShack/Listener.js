@@ -112,46 +112,81 @@ async function checkUserData(userId) {
 }
 
 function categorizeEmbed(embedTitle) {
+    if (embedTitle.includes("Hotdog Cart")) return "cart";
+    if (embedTitle.includes("Taco Truck")) return "truck";
+    if (embedTitle.includes("Mall Kiosk")) return "kiosk";
+    if (embedTitle.includes("Ice Cream Stand")) return "stand";
     if (embedTitle.includes("Upgrades")) return "upgrades";
     if (embedTitle.includes("Employees")) return "hire";
     if (embedTitle.includes("Decorations")) return "decorations";
     if (embedTitle.includes("Advertisements")) return "advertisements";
-    if (embedTitle.includes("Taco Truck Upgrades")) return "truck";
-    if (embedTitle.includes("Mall Kiosk Upgrades")) return "kiosk";
-    if (embedTitle.includes("Ice Cream Stand Upgrades")) return "stand";
     if (embedTitle.includes("Amusement Park Attractions")) return "attractions";
-    if (embedTitle.includes("Hotdog Cart Upgrades")) return "cart";
 
     // Add more conditions as necessary
     return "unknown"; // Default category
 }
-function parseHQEmbedDescription(description) {
-    const parsedData = {
-        upgrades: {},
-        employees: {}
-    };
+function parseHQEmbed(description) {
+    const parsedData = { upgrades: {}, hire: {} };
 
-    const lines = description.split('\n');
+    // Split the description into lines for individual processing.
+    const lines = description.split('\n').filter(line => line.trim() !== '');
+
+    // Variables to hold the current section's name key and progress.
+    let nameKey = "";
+    let currentProgress = null;
+
     lines.forEach(line => {
-        let match = line.match(/^\*\*(.+?)\*\* \((\d+)\/\d+\)/);
-        console.log(match)
-        if (match) {
-            const name = match[1].trim().replace(/\s+/g, '');
-            const level = parseInt(match[2], 10);
-            console.log(name, level)
+        // Resetting progress for each new line to ensure it matches with the current name.
+        currentProgress = null;
 
-            // Check if the name matches any known upgrade or employee
-            if (name in parsedData.upgrades) {
-                parsedData.upgrades[name] = level;
-                console.log(parsedData.upgrades)
-            } else if (name in parsedData.employees) {
-                parsedData.employees[name] = level;
+        // Extracting the current level and name from the line.
+        const progressMatch = line.match(/\((\d+)\/\d+\)/);
+        const nameMatch = line.match(/^\*\*(.+?)\*\*/);
+
+        if (nameMatch && progressMatch) {
+            // If both name and progress are found in the same line, process them together.
+            nameKey = nameMatch[1].toLowerCase().replace(/\s+/g, '');
+            currentProgress = parseInt(progressMatch[1], 10);
+            console.log(`Name: ${nameKey}, Progress: ${currentProgress}`);
+            // Determining the category based on existing keys in the default structure.
+            if (nameKey in defaultShackData.hq.upgrades) {
+                parsedData.upgrades[nameKey] = currentProgress;
+            } else if (nameKey in defaultShackData.hq.hire) {
+                parsedData.hire[nameKey] = currentProgress;
             }
         }
     });
 
     return parsedData;
 }
+async function updateHQData(shackData, parsedHQData, userId) {
+    Object.entries(parsedHQData.upgrades).forEach(([key, value]) => {
+        shackData.hq.upgrades[key] = value;
+    });
+
+    Object.entries(parsedHQData.hire).forEach(([key, value]) => {
+        shackData.hq.hire[key] = value;
+    });
+
+    // Ensure you're setting the entire shackData object and not just the hq part
+    await db.set(`shackData.${userId}`, shackData);
+    console.log(`HQ data updated and saved for user ${userId}.`);
+}
+
+// This assumes you have a function named parseHQEmbed that correctly extracts the HQ-related data from the embed description
+// and categorizes it into either 'upgrades' or 'employees' based on the content.
+async function handleHQEmbedUpdate(newMessage, userId) {
+    const title = newMessage.embeds[0].title || '';
+    const categoryhq = title.includes('Employees') ? 'employees' : 'upgrades';
+    const parsedHQData = parseHQEmbed(newMessage.embeds[0].description);
+
+    // Fetch existing data or create a new instance if not found
+    let shackData = await db.get(`shackData.${userId}`) || getNewShackDataInstance();
+
+    // Update HQ data
+    await updateHQData(shackData, categoryhq, parsedHQData, userId);
+}
+
 
 async function handleEmbedUpdate(embed, userId) {
     // Determine the category from the embed title or content
@@ -238,28 +273,27 @@ module.exports = {
                             return;
                         } 
                             // Implement similar logic for 'hire', 'decorations', 'advertisements', etc., based on 'category'
-
                             const title = newMessage.embeds[0].title || '';
+                            const categoryhq = title.includes('Employees') ? 'employees' : 'upgrades';
+
                             if (title.includes('Employees') || title.includes('Upgrades')) {
-                                const category = title.includes('Employees') ? 'employees' : 'upgrades';
-                                const parsedHQData = parseHQEmbedDescription(newMessage.embeds[0].description);
-                                
-                                let shackData = await db.get(`shackData.${matchedUserId}`); // Fetch existing data
-                                if (!shackData) {
-                                    // Handle case where data does not exist
-                                    console.log(`No shack data found for ${username}.`);
-                                    return;
-                                }
-                        
-                                // Update the HQ data in the shackData object
-                                Object.assign(shackData.hq[category], parsedHQData[category]);
-                        
-                                // Save the updated data back to the database
-                                await db.set(`shackData.${matchedUserId}.hq`, shackData.hq);
-                                console.log(`HQ data updated for ${username}.`);
+                                const parsedHQdata = parseHQEmbed(updatedEmbed.description);
+                                await updateHQData(shackData, parsedHQdata, matchedUserId);
+                                console.log("Parsed HQ Data:", JSON.stringify(parsedHQdata, null, 2));
                             }
-        
-                        
+                                //     // Ensure you have the correct user ID to update. This example uses a placeholder function to fetch the user ID.
+                            //     const userId = matchedUserId;
+                            //     if (!userId) {
+                            //         console.log("User ID not found from embed.");
+                            //         return;
+                            //     }
+                            //     const parsedHQData = parseHQEmbed(updatedEmbed.description);
+
+                            //     await updateHQData(shackData, parsedHQData, userId);
+                            // }
+                            
+                        // await updateHQData(shackData, parsedHQData, matchedUserId);
+
                         updateShackData(shackData, category, parsedData, matchedUserId);
 
                         console.log(`Data updated for user ${username} at location ${activeLocation}.`);

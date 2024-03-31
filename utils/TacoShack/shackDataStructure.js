@@ -220,17 +220,17 @@ const defaultShackData = {
             taskmultiplier: 0,
         },
         upgrades: {
-            customerServiceDepartment: 0,
-            foodServicesDepartment: 0,
-            overtimeManagement: 0,
-            lunchRushInitiative: 0,
-            taskBooster: 0,
+            customerservicedepartment: 0,
+            foodservicesdepartment: 0,
+            overtimemanagement: 0,
+            lunchrushinitiative: 0,
+            taskbooster: 0,
         },
-        employees: {
+        hire: {
             secretary: 0,
             treasurer: 0,
-            chiefFinancialOfficer: 0,
-            chiefExecutiveOfficer: 0,
+            chieffinancialofficer: 0,
+            chiefexecutiveofficer: 0,
         },
     }
 };
