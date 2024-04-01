@@ -109,12 +109,18 @@ module.exports = {
                                 case 'Shack Name':
                                     const parts2 = field.value.split(' '); // Split the value by spaces
                                     let shackName = "";
+                                    let expansionLevel = 0; // Initialize expansion level
                                     for (let part of parts2) {
                                         if (part.includes('(')) break; // Stop if the part includes a parenthesis
                                         if (shackName.length > 0) shackName += " "; // Add a space between parts
                                         shackName += part;
                                     }
+                                    const activeLocation2 = shackData.info.activeLocation;
+                                    const locationKey = activeLocation2.toLowerCase(); // Ensure this matches your object keys accurately
+                                    // Count taco emojis in the value string
+                                    expansionLevel = (field.value.match(/🌮/g) || []).length;
                                     shackData.info.shackName = shackName.trim(); // Set the extracted shack name
+                                    shackData.location[locationKey].info.expansionLevel = expansionLevel; // Set the expansion level based on taco emoji count
                                     break;
                                 case 'Franchise':
                                 case 'Franchise | Recruiter':

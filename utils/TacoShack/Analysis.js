@@ -8,7 +8,6 @@ module.exports = {
             // Check if the interaction is a button press and for the 'analysis' custom ID
             if (interaction.isButton() && interaction.customId === 'analysis') {
                 // Your analysis handling logic here
-                const UpgradeData = 
                 // Respond to the interaction
                 interaction.reply({ content: 'This is the Analysis response.', ephemeral: false });
             }

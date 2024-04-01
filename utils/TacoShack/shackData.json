@@ -1,0 +1,52 @@
+{
+    "locations": {
+      "taco": {
+        "upgrades": {
+        "paint": { "max0": 10, "max1": 20, "max2": 35,"max3": 35,"initialPrice": 250, "boost": 10 },
+        "furniture": {"max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 600, "boost": 20 },
+        "bathrooms": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 800, "boost": 25 },
+        "billboard": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 1000, "boost": 35 },
+        "appliances": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 1200, "boost": 0 },
+        "tipjar": {"max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 500, "boost": 0 }
+    }, "hire": {
+        "apprentice": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "cook": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "advertiser": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "greeter": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "sous": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "head": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "executive": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 }
+    }, "decorations": {
+        "flowers": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "ornaments": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "lights": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "mural": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "statue": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 }
+    }, "advertisements": {
+        "newspaper": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "radio": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "email": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "internet": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "tv": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "blimp": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 }
+    }, "truck": {
+        "register": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "assistant": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "driver": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "kitchen": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
+        "engine": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 }
+}
+      },
+      "beach": {
+      },
+      "city": {
+      },
+      "mall": {
+      },
+      "amusement": {
+      }
+    },
+    "hq": {
+    }
+  }
+  
