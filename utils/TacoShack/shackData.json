@@ -12,7 +12,7 @@
         "tipjar": {"max0": 8, "max1": 15, "max2": 30, "max": 35,"initialPrice": 500, "boost": 0 }
     }, "hire": {
         "apprentice": { "max0": 10, "max1": 35, "max2": 30, "max": 35,"initialPrice": 250, "boost": 10 },
-        "cook": { "max0": 10, "max1": 35, "max2": 30, "max": 35,"initialPrice": 600, "boost": 20 },
+        "cook": { "max0": 10, "max1": 20, "max2": 30, "max": 35,"initialPrice": 600, "boost": 20 },
         "advertiser": { "max0": 10, "max1": 20, "max2": 30, "max": 35,"initialPrice": 700, "boost": 20 },
         "greeter": { "max0": 10, "max1": 20, "max2": 30, "max": 35,"initialPrice": 800, "boost": 25 },
         "sous": { "max0": 10, "max1": 20, "max2": 30, "max": 35,"initialPrice": 1200, "boost": 40 },
@@ -50,6 +50,123 @@
         "appliances": { "max0": 8, "max1": 15, "max2": 25,  "max3": 30,"max": 30,"initialPrice": 1200, "boost": 0 },
         "tipjar": {"max0": 8, "max1": 15, "max2": 30, "max3": 35, "max": 35,"initialPrice": 500, "boost": 0 }
     }, "hire": {
+        "apprentice": { "max0": 10, "max1": 20, "max2": 30, "max3": 35, "max": 40,"initialPrice": 250, "boost": 10 },
+        "cook": { "max0": 10, "max1": 20, "max2": 30, "max3": 35, "max": 40,"initialPrice": 600, "boost": 20 },
+        "advertiser": { "max0": 10, "max1": 20, "max2": 30, "max3": 35, "max": 40,"initialPrice": 700, "boost": 20 },
+        "greeter": { "max0": 10, "max1": 20, "max2": 30, "max3": 35, "max": 40,"initialPrice": 800, "boost": 25 },
+        "sous": { "max0": 10, "max1": 20, "max2": 30, "max3": 35, "max": 40,"initialPrice": 1200, "boost": 40 },
+        "head": { "max0": 8, "max1": 16, "max2": 25, "max3": 30, "max": 35,"initialPrice": 2000, "boost": 65 },
+        "executive": { "max0": 8, "max1": 15, "max2": 30, "max3": 35, "max": 40,"initialPrice": 5000, "boost": 150 }
+    }, "decorations": {
+        "shells": { "max0": 10, "max1": 20, "max2": 30, "max3": 40, "max": 40,"initialPrice": 100, "boost": 5 },
+        "umbrella": { "max0": 8, "max1": 15, "max2": 30, "max3": 35, "max": 40,"initialPrice": 250, "boost": 10 },
+        "leis": { "max0": 5, "max1": 10, "max2": 25, "max3": 30, "max": 35,"initialPrice": 1500, "boost": 30 },
+        "tanks": { "max0": 1, "max1": 3, "max2": 5, "max3": 5, "max": 5,"initialPrice": 20000, "boost": 125 },
+        "fountain": { "max0": 1, "max1": 2, "max2": 3, "max3": 3, "max": 3,"initialPrice": 1500000, "boost": 500 }
+    }, "advertisements": {
+        "newspaper": { "max0": 10, "max1": 15, "max2": 30, "max3": 35, "max": 40,"initialPrice": 350, "boost": 10 },
+        "radio": { "max0": 8, "max1": 15, "max2": 25, "max3": 30, "max": 35,"initialPrice": 650, "boost": 20 },
+        "email": { "max0": 6, "max1": 15, "max2": 25, "max3": 30, "max": 35,"initialPrice": 1000, "boost": 30 },
+        "internet": { "max0": 5, "max1": 10, "max2": 30, "max3": 35, "max": 40,"initialPrice": 2000, "boost": 50 },
+        "tv": { "max0": 2, "max1": 5, "max2": 10, "max3": 15,"max": 20,"initialPrice": 5500, "boost": 160 },
+        "blimp": { "max0": 1, "max1": 2, "max2": 3, "max3": 3, "max": 4,"initialPrice": 250000, "boost": 200 }
+    }, "stand": {
+        "decals": { "max0": 25, "max1": 25, "max2": 25, "max3": 25, "max": 25,"initialPrice": 5000, "boost": 50 },
+        "wheels": { "max0": 15, "max1": 15, "max2": 15, "max3": 15, "max": 15,"initialPrice": 8500, "boost": 100 },
+        "mixers": { "max0": 15, "max1": 15, "max2": 15,  "max3": 15,"max": 15,"initialPrice": 25000, "boost": 250 },
+        "server": { "max0": 5, "max1": 5, "max2": 5,"max3": 5, "max": 5,"initialPrice": 150000, "boost": 400 },
+        "freezer": { "max0": 10, "max1": 10, "max2": 10, "max3": 10, "max": 10,"initialPrice": 750000, "boost": 750 }
+    }
+      },
+      "city": {
+        "expansionLevels":5,
+        "expansion" : 5000000,
+        "upgrades": {
+        "paint": { "max0": 10, "max1": 20, "max2": 30, "max3": 35, "max4": 40,"max": 45,"initialPrice": 250, "boost": 10 },
+        "furniture": {"max0": 10, "max1": 18, "max2": 25,  "max3": 30,"max4": 35,"max": 40,"initialPrice": 600, "boost": 20 },
+        "bathrooms": { "max0": 8, "max1": 15, "max2": 25,  "max3": 30,"max4": 35,"max": 40,"initialPrice": 800, "boost": 25 },
+        "billboard": { "max0": 10, "max1": 15, "max2": 20,  "max3": 25,"max4": 30,"max": 40,"initialPrice": 1000, "boost": 35 },
+        "appliances": { "max0": 8, "max1": 15, "max2": 25,  "max3": 30,"max4": 30,"max": 30,"initialPrice": 1200, "boost": 0 },
+        "tipjar": {"max0": 8, "max1": 15, "max2": 30, "max3": 35, "max4": 35,"max": 35,"initialPrice": 500, "boost": 0 }
+    }, "hire": {
+        "apprentice": { "max0": 10, "max1": 20, "max2": 30, "max3": 35,"max4": 40, "max": 45,"initialPrice": 250, "boost": 10 },
+        "cook": { "max0": 10, "max1": 20, "max2": 30, "max3": 35, "max4": 40,"max": 45,"initialPrice": 600, "boost": 20 },
+        "advertiser": { "max0": 10, "max1": 20, "max2": 30, "max3": 35,"max4": 40, "max": 45,"initialPrice": 700, "boost": 20 },
+        "greeter": { "max0": 10, "max1": 20, "max2": 30, "max3": 35, "max4": 40,"max": 45,"initialPrice": 800, "boost": 25 },
+        "sous": { "max0": 10, "max1": 20, "max2": 30, "max3": 35, "max4": 40,"max": 45,"initialPrice": 1200, "boost": 40 },
+        "head": { "max0": 8, "max1": 16, "max2": 25, "max3": 30,"max4": 35, "max": 40,"initialPrice": 2000, "boost": 65 },
+        "executive": { "max0": 8, "max1": 15, "max2": 30, "max3": 35, "max4": 40,"max": 45,"initialPrice": 5000, "boost": 150 }
+    }, "decorations": {
+        "banner": { "max0": 10, "max1": 20, "max2": 30, "max3": 40, "max4": 45,"max": 50,"initialPrice": 150, "boost": 5 },
+        "sign": { "max0": 10, "max1": 15, "max2": 30, "max3": 35, "max4": 40,"max": 50,"initialPrice": 500, "boost": 10 },
+        "glass": { "max0": 5, "max1": 10, "max2": 25, "max3": 30,"max4": 35, "max": 45,"initialPrice": 2500, "boost": 30 },
+        "artwork": { "max0": 1, "max1": 3, "max2": 5, "max3": 6,"max4": 7, "max": 8,"initialPrice": 100000, "boost": 150 },
+        "chandelier": { "max0": 1, "max1": 2, "max2": 3, "max3": 4,"max4": 5, "max": 8,"initialPrice": 5000000, "boost": 1750 }
+    }, "advertisements": {
+        "newspaper": { "max0": 10, "max1": 15, "max2": 30, "max3": 35,"max4": 40, "max": 45,"initialPrice": 350, "boost": 10 },
+        "radio": { "max0": 8, "max1": 15, "max2": 25, "max3": 30,"max4": 35,"max": 40,"initialPrice": 650, "boost": 20 },
+        "email": { "max0": 6, "max1": 15, "max2": 25, "max3": 30,"max4": 35, "max": 40,"initialPrice": 1000, "boost": 30 },
+        "internet": { "max0": 5, "max1": 10, "max2": 30, "max3": 35,"max4": 40, "max": 45,"initialPrice": 2000, "boost": 50 },
+        "tv": { "max0": 2, "max1": 5, "max2": 10, "max3": 15,"max4": 20,"max": 30,"initialPrice": 5500, "boost": 160 },
+        "blimp": { "max0": 1, "max1": 2, "max2": 3, "max3": 3,"max4": 4, "max": 5,"initialPrice": 250000, "boost": 200 }
+    }, "cart": {
+        "buns": { "max0": 30, "max1": 30, "max2": 30, "max3": 30, "max4": 30,"max": 30,"initialPrice": 7500, "boost": 50 },
+        "condiments": { "max0": 25, "max1": 25, "max2": 25, "max3": 25,"max4": 25, "max": 25,"initialPrice": 10000, "boost": 100 },
+        "beverages": { "max0": 20, "max1": 20, "max2": 20,  "max3": 20,"max4": 20,"max": 20,"initialPrice": 50000, "boost": 275 },
+        "coolers": { "max0": 15, "max1": 15, "max2": 15, "max3": 15, "max4": 15,"max": 15,"initialPrice": 250000, "boost": 450 },
+        "grill": { "max0": 10, "max1": 10, "max2": 10, "max3": 10, "max4": 10,"max": 10,"initialPrice": 1000000, "boost": 800 }
+    }
+      },
+      "mall": {
+        "expansionLevels": 3,
+        "expansion" : 3000000,
+        "upgrades": {
+        "paint": { "max0": 10, "max1": 20, "max2": 30,"max": 35,"initialPrice": 250, "boost": 10 },
+        "furniture": {"max0": 10, "max1": 18, "max2": 25, "max": 30,"initialPrice": 600, "boost": 20 },
+        "bathrooms": { "max0": 8, "max1": 15, "max2": 25, "max": 30,"initialPrice": 800, "boost": 25 },
+        "billboard": { "max0": 10, "max1": 15, "max2": 20, "max": 25,"initialPrice": 1000, "boost": 35 },
+        "appliances": { "max0": 8, "max1": 15, "max2": 25, "max": 30,"initialPrice": 1200, "boost": 0 },
+        "tipjar": {"max0": 8, "max1": 15, "max2": 30, "max": 35,"initialPrice": 500, "boost": 0 }
+    }, "hire": {
+        "cashier": { "max0": 10, "max1": 20, "max2": 30, "max": 35,"initialPrice": 250, "boost": 10 },
+        "associate": { "max0": 10, "max1": 20, "max2": 30, "max": 35,"initialPrice": 500, "boost": 20 },
+        "janitor": { "max0": 10, "max1": 20, "max2": 30, "max": 35,"initialPrice": 1000, "boost": 20 },
+        "security": { "max0": 8, "max1": 16, "max2": 25, "max": 30,"initialPrice": 2000, "boost": 25 },
+        "sales": { "max0": 8, "max1": 15, "max2": 30, "max": 35,"initialPrice": 2500, "boost": 40 },
+        "leader": { "max0": 10, "max1": 20, "max2": 30, "max": 35,"initialPrice": 3500, "boost": 65 },
+        "manager": { "max0": 10, "max1": 20, "max2": 30, "max": 35,"initialPrice": 5000, "boost": 150 }
+    }, "decorations": {
+        "chair": { "max0": 10, "max1": 20, "max2": 30, "max": 40,"initialPrice": 150, "boost": 5 },
+        "booth": { "max0": 10, "max1": 15, "max2": 30, "max": 35,"initialPrice": 500, "boost": 10 },
+        "display": { "max0": 5, "max1": 10, "max2": 25, "max": 30,"initialPrice": 2500, "boost": 30 },
+        "buffet": { "max0": 1, "max1": 3, "max2": 5, "max": 6,"initialPrice": 50000, "boost": 100 },
+        "screen": { "max0": 1, "max1": 2, "max2": 3, "max": 4,"initialPrice": 2000000, "boost": 400 }
+    }, "advertisements": {
+        "newspaper": { "max0": 10, "max1": 15, "max2": 30, "max": 35,"initialPrice": 350, "boost": 10 },
+        "radio": { "max0": 8, "max1": 15, "max2": 25, "max": 30,"initialPrice": 650, "boost": 20 },
+        "email": { "max0": 6, "max1": 15, "max2": 25, "max": 30,"initialPrice": 1000, "boost": 30 },
+        "internet": { "max0": 5, "max1": 10, "max2": 30, "max": 35,"initialPrice": 2000, "boost": 50 },
+        "tv": { "max0": 2, "max1": 5, "max2": 10, "max": 15,"initialPrice": 5500, "boost": 160 },
+        "blimp": { "max0": 1, "max1": 2, "max2": 3, "max": 3,"initialPrice": 250000, "boost": 200 }
+    }, "kiosk": {
+        "register": { "max0": 20, "max1": 20, "max2": 20, "max": 20,"initialPrice": 100, "boost": 50 },
+        "assistant": { "max0": 15, "max1": 15, "max2": 15, "max": 15,"initialPrice": 100, "boost": 100 },
+        "driver": { "max0": 10, "max1": 10, "max2": 10, "max": 10,"initialPrice": 100, "boost": 250 },
+        "kitchen": { "max0": 5, "max1": 5, "max2": 5, "max": 5,"initialPrice": 100, "boost": 400 },
+        "engine": { "max0": 3, "max1": 3, "max2": 3, "max": 3,"initialPrice": 100, "boost": 1000 }
+}
+      },
+      "amusement": {
+        "expansionLevels":4,
+        "expansion" : 7500000,
+        "upgrades": {
+        "paint": { "max0": 10, "max1": 20, "max2": 30, "max3": 35, "max": 40,"initialPrice": 250, "boost": 10 },
+        "furniture": {"max0": 10, "max1": 18, "max2": 25,  "max3": 30,"max": 35,"initialPrice": 600, "boost": 20 },
+        "bathrooms": { "max0": 8, "max1": 15, "max2": 25,  "max3": 30,"max": 35,"initialPrice": 800, "boost": 25 },
+        "billboard": { "max0": 10, "max1": 15, "max2": 20,  "max3": 25,"max": 30,"initialPrice": 1000, "boost": 35 },
+        "appliances": { "max0": 8, "max1": 15, "max2": 25,  "max3": 30,"max": 30,"initialPrice": 1200, "boost": 0 },
+        "tipjar": {"max0": 8, "max1": 15, "max2": 30, "max3": 35, "max": 35,"initialPrice": 500, "boost": 0 }
+    }, "hire": {
         "apprentice": { "max0": 10, "max1": 35, "max2": 30, "max3": 35, "max": 40,"initialPrice": 250, "boost": 10 },
         "cook": { "max0": 10, "max1": 35, "max2": 30, "max3": 35, "max": 40,"initialPrice": 600, "boost": 20 },
         "advertiser": { "max0": 10, "max1": 20, "max2": 30, "max3": 35, "max": 40,"initialPrice": 700, "boost": 20 },
@@ -58,11 +175,11 @@
         "head": { "max0": 8, "max1": 16, "max2": 25, "max3": 30, "max": 35,"initialPrice": 2000, "boost": 65 },
         "executive": { "max0": 8, "max1": 15, "max2": 30, "max3": 35, "max": 40,"initialPrice": 5000, "boost": 150 }
     }, "decorations": {
-        "shells": { "max0": 10, "max1": 20, "max2": 30, "max3": 40, "max": 40,"initialPrice": 100, "boost": 5 },
-        "umbrella": { "max0": 8, "max1": 15, "max2": 30, "max3": 35, "max": 40,"initialPrice": 200, "boost": 10 },
-        "leis": { "max0": 5, "max1": 10, "max2": 25, "max3": 30, "max": 35,"initialPrice": 1000, "boost": 30 },
-        "tanks": { "max0": 1, "max1": 3, "max2": 5, "max3": 5, "max": 5,"initialPrice": 1500, "boost": 125 },
-        "fountain": { "max0": 1, "max1": 2, "max2": 3, "max3": 35, "max": 3,"initialPrice": 500000, "boost": 500 }
+        "benches": { "max0": 10, "max1": 20, "max2": 30, "max3": 40, "max": 40,"initialPrice": 100, "boost": 5 },
+        "speaker": { "max0": 8, "max1": 15, "max2": 30, "max3": 35, "max": 40,"initialPrice": 250, "boost": 10 },
+        "balloon": { "max0": 5, "max1": 10, "max2": 25, "max3": 30, "max": 35,"initialPrice": 1500, "boost": 30 },
+        "fireworks": { "max0": 1, "max1": 3, "max2": 5, "max3": 5, "max": 5,"initialPrice": 20000, "boost": 125 },
+        "plushies": { "max0": 1, "max1": 2, "max2": 3, "max3": 4, "max": 5,"initialPrice": 1500000, "boost": 500 }
     }, "advertisements": {
         "newspaper": { "max0": 10, "max1": 15, "max2": 30, "max3": 35, "max": 35,"initialPrice": 350, "boost": 10 },
         "radio": { "max0": 8, "max1": 15, "max2": 25, "max3": 35, "max": 30,"initialPrice": 650, "boost": 20 },
@@ -70,22 +187,30 @@
         "internet": { "max0": 5, "max1": 10, "max2": 30, "max3": 35, "max": 35,"initialPrice": 2000, "boost": 50 },
         "tv": { "max0": 2, "max1": 5, "max2": 10, "max3": 35,"max": 15,"initialPrice": 5500, "boost": 160 },
         "blimp": { "max0": 1, "max1": 2, "max2": 3, "max3": 35, "max": 3,"initialPrice": 250000, "boost": 200 }
-    }, "stand": {
-        "decals": { "max0": 25, "max1": 25, "max2": 25, "max3": 25, "max": 25,"initialPrice": 5000, "boost": 50 },
-        "wheels": { "max0": 15, "max1": 15, "max2": 15, "max3": 15, "max": 15,"initialPrice": 8500, "boost": 100 },
-        "mixers": { "max0": 15, "max1": 15, "max2": 15,  "max3": 15,"max": 15,"initialPrice": 25000, "boost": 250 },
-        "server": { "max0": 5, "max1": 5, "max2": 5, "max": 5,"initialPrice": 150000, "boost": 400 },
-        "freezer": { "max0": 10, "max1": 10, "max2": 10, "max3": 10, "max": 10,"initialPrice": 750000, "boost": 750 }
+    }, "attractions": {
+        "toss": { "max0": 20, "max1": 20, "max2": 20, "max3": 20, "max": 20,"initialPrice": 5000, "boost": 50 },
+        "arcade": { "max0": 15, "max1": 15, "max2": 15, "max3": 15, "max": 15,"initialPrice": 8500, "boost": 100 },
+        "carnival": { "max0": 10, "max1": 10, "max2": 10, "max3": 10, "max": 10,"initialPrice": 25000, "boost": 250 },
+        "carousel": { "max0": 5, "max1": 5, "max2": 5,  "max3": 5,"max": 5,"initialPrice": 150000, "boost": 400 },
+        "coaster": { "max0": 10, "max1": 10, "max2": 10, "max3": 10,"max": 10,"initialPrice": 750000, "boost": 2000 },
+        "ferris": { "max0": 1, "max1": 1, "max2": 1, "max3": 1, "max": 1,"initialPrice": 50000000, "boost": 6000 }
     }
-      },
-      "city": {
-      },
-      "mall": {
-      },
-      "amusement": {
       }
     },
     "hq": {
+        "upgrades" :{
+            "customerservicedepartment" : {"max" : 20, "initialPrice": 1000000, "tipboost": 0.04},
+            "foodservicedepartment" : {"max" : 1, "initialPrice": 1750000, "workboost": 0.04},
+            "overtimemanagement" : {"max" : 1, "initialPrice": 1000000, "overtimeboost": 1},
+            "lunchrushinitiative" : {"max" : 1, "initialPrice": 1000000, "boost": 0},
+            "taskbooster" : {"max" : 1, "initialPrice": 1000000, "boost": 0}
+        },
+        "hire": {
+            "secretary" : {"max" : 1, "initialPrice": 1000000, "boost": 100},
+            "treasurer" : {"max" : 1, "initialPrice": 1750000, "boost": 200},
+            "chieffinancialofficer" : {"max" : 1, "initialPrice": 2500000, "boost": 300},
+            "chiefexecutiveofficer" : {"max" : 1, "initialPrice": 5000000, "boost": 500}
+        }
     }
   }
   

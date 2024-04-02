@@ -131,6 +131,7 @@ const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder } = require('
 }
 
 
+
   module.exports = {
 
     
@@ -149,6 +150,15 @@ const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder } = require('
             option.setName('input')
                 .setDescription('Input value for the selected operation')
                 .setRequired(true)),
+        // .addStringOption(option =>
+        //           option.setName('with_caps')
+        //               .setDescription('Select with or without multiplier caps')
+        //               .setRequired(false)
+        //               .addChoices(
+        //                   { name: 'With Caps', value: 'withcaps' },
+        //                   { name: 'Without Caps', value: 'withoutcaps' }
+        //               )),      
+        
     async execute(interaction) {
         const operation = interaction.options.getString('operation');
         const input = interaction.options.getInteger('input');
@@ -166,8 +176,6 @@ const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder } = require('
               
 
         } else if (operation === 'estimate_multi') {
-
-
             function minPointsForAdditiveMultiplier(targetAddedMultiplier, upgrades, initialCosts) {
                 let totalAddedMultiplier = 0.0;
                 let totalCost = 0;
@@ -207,15 +215,51 @@ const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder } = require('
             const result = minPointsForAdditiveMultiplier(targetAddedMultiplier, upgrades, initialCosts);
             console.log(`Minimum points required: ${result.totalCost + totalCapCost}`);
             console.log(`Purchases: ${result.purchases.join(', ')}`);
-            description = `**Desired Multiplier: ${input}x**\n
-            Minimum points required: ${result.totalCost + totalCapCost}\n\n`
+            description = `**Desired Multiplier: ${input}x**\nMinimum points required: **${(result.totalCost + totalCapCost).toLocaleString('en-US', { minimumFractionDigits: 0 }) }**\n\n`
             // Append each upgrade purchase count to the description
             upgrades.forEach((upgrade, index) => {
             description += `**${upgrade * 100}% Multiplier:** ${result.purchases[index]}\n`;
             });
-            description += `**📈 Total Multiplier: ${input}x**\n🧢 Multiplier Caps: ${capsNeeded}\n`
-    
-            }
+            description += `** Total Multiplier: ${input}x**\n** Multiplier Caps: ${capsNeeded}**\n**Total Multiplier Caps Cost: ${totalCapCost.toLocaleString('en-US', { minimumFractionDigits: 0 }) }**\n`;
+          }
+          // } else if(operation ===`estimate_multi` && interaction.options.getString('with_caps') === 'withoutcaps') {
+          //   function minPointsForAdditiveMultiplier(targetAddedMultiplier, upgrades, initialCosts) {
+          //     let totalAddedMultiplier = 0.0;
+          //     let totalCost = 0;
+          //     let purchases = new Array(upgrades.length).fill(0);
+          //     let currentCosts = [...initialCosts];
+            
+          //     while (totalAddedMultiplier < targetAddedMultiplier) {
+          //         // Calculate cost-effectiveness for each upgrade
+          //         let effectiveness = upgrades.map((upgrade, index) => upgrade / currentCosts[index]);
+          //         // Find the index of the most cost-effective upgrade
+          //         let bestUpgradeIndex = effectiveness.indexOf(Math.max(...effectiveness));
+          //         // Update total cost, purchases, and the total added multiplier
+          //         totalCost += currentCosts[bestUpgradeIndex];
+          //         totalAddedMultiplier += upgrades[bestUpgradeIndex];
+          //         purchases[bestUpgradeIndex]++;
+          //         // Increase the cost for the next purchase of this upgrade
+          //         currentCosts[bestUpgradeIndex] += initialCosts[bestUpgradeIndex];
+            
+          //         if (totalAddedMultiplier >= targetAddedMultiplier) {
+          //             break;
+          //         }
+          //     }
+            
+          //     return { totalCost, purchases };
+          //   }
+            
+            
+          //   const targetMultiplier = input; // Example target multiplier
+          //   const upgrades = [0.05, 0.15, 0.3, 0.5, 1.00];
+          //   const initialCosts = [10, 50, 250, 750, 2500];
+          //   const result = minPointsForAdditiveMultiplier(targetMultiplier, upgrades, initialCosts);
+          //   let description = `**Desired Multiplier: ${input}x**\nMinimum points required: ${result.totalCost}\n`;
+          //   upgrades.forEach((upgrade, index) => {
+          //     description += `${upgrade * 100}% = ${result.purchases[index]} purchases\n`;
+          // });
+          //   }
+          
         const responseEmbed = new EmbedBuilder()
         .setTitle("Calculation Result")
         .setColor('#32CD32')
