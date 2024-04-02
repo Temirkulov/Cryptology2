@@ -2,12 +2,12 @@
     "locations": {
       "taco": {
         "upgrades": {
-        "paint": { "max0": 10, "max1": 20, "max2": 35,"max3": 35,"initialPrice": 250, "boost": 10 },
-        "furniture": {"max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 600, "boost": 20 },
-        "bathrooms": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 800, "boost": 25 },
-        "billboard": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 1000, "boost": 35 },
-        "appliances": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 1200, "boost": 0 },
-        "tipjar": {"max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 500, "boost": 0 }
+        "paint": { "max0": 10, "max1": 20, "max2": 30,"max3": 35,"initialPrice": 250, "boost": 10 },
+        "furniture": {"max0": 10, "max1": 18, "max2": 25, "max3": 30,"initialPrice": 600, "boost": 20 },
+        "bathrooms": { "max0": 8, "max1": 15, "max2": 25, "max3": 30,"initialPrice": 800, "boost": 25 },
+        "billboard": { "max0": 10, "max1": 15, "max2": 20, "max3": 25,"initialPrice": 1000, "boost": 35 },
+        "appliances": { "max0": 8, "max1": 15, "max2": 25, "max3": 30,"initialPrice": 1200, "boost": 0 },
+        "tipjar": {"max0": 8, "max1": 15, "max2": 30, "max3": 35,"initialPrice": 500, "boost": 0 }
     }, "hire": {
         "apprentice": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },
         "cook": { "max0": 35, "max1": 35, "max2": 35, "max3": 35,"initialPrice": 100, "boost": 10 },

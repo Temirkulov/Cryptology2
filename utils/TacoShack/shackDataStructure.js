@@ -9,6 +9,7 @@ const defaultShackData = {
         franchise: "",
         franchiseStatus: "",
         activeLocation: "",
+        hqPresent: false,
     },
     location: {
         taco: { info: {}, upgrades: {
