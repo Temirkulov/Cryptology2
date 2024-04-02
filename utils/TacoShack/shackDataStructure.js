@@ -12,7 +12,9 @@ const defaultShackData = {
         hqPresent: false,
     },
     location: {
-        taco: { info: {}, upgrades: {
+        taco: { info: {
+            expansion: false,
+        }, upgrades: {
             paint: 0,
             furniture: 0,
             bathrooms: 0,
@@ -47,7 +49,9 @@ const defaultShackData = {
             kitchen: 0,
             engine: 0,
 } },
-        beach: { info: {}, upgrades: {
+        beach: { info: {
+            expansion: false,
+        }, upgrades: {
             paint: 0,
             furniture: 0,
             bathrooms: 0,
@@ -87,7 +91,9 @@ const defaultShackData = {
             freezer: 0,
 
         } },
-        city: { info: {}, upgrades: {
+        city: { info: {
+            expansion: false,
+        }, upgrades: {
             paint: 0,
             furniture: 0,
             bathrooms: 0,
@@ -127,7 +133,9 @@ const defaultShackData = {
             grill: 0,
 
         } },
-        mall: { info: {}, upgrades: {
+        mall: { info: {
+            expansion: false,
+        }, upgrades: {
             paint: 0,
             furniture: 0,
             bathrooms: 0,
@@ -167,7 +175,9 @@ const defaultShackData = {
             merch: 0,
 
         } },
-        amusement: { info: {}, upgrades: {
+        amusement: { info: {
+            expansion: false,
+        }, upgrades: {
             paint: 0,
             furniture: 0,
             bathrooms: 0,

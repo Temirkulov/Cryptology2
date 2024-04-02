@@ -44,14 +44,16 @@ module.exports = {
         client.on('messageCreate', async message => {
             if (message.author.bot && message.author.id === '490707751832649738') {
                 await delay(2000);
-                // console.log("Reacting to TacoShack bot message...");
+                // console.log("Reacting to TacoShack bot message...")
                 if (message.embeds.length > 0) {
                     const validTitles = ["Upgrades", "Employees", "Decorations"];
                     const TitleEmbed = message.embeds[0];
                     const firstField = message.embeds[0].fields[0];
                     if (firstField && (firstField.name.includes("Shack Name") || firstField.value.includes("Shack Name"))) {
-
-                try {
+                        if(TitleEmbed.author) {
+                            return;
+                        }
+                        try {
                     await message.react('📋');
                     console.log("Awaiting reactions to TacoShack bot message...");
                     
@@ -63,7 +65,6 @@ module.exports = {
                     if (reaction) {
                         const user = reaction.users.cache.filter(u => !u.bot).first();
                         const embed = message.embeds[0];
-                        console.log(embed)
                         const fields = embed.fields;
                         let extractedShackName = "";
                         if (embed.fields.length > 0 && embed.fields[0].name === "Shack Name") {
@@ -106,6 +107,13 @@ module.exports = {
                         fields.forEach(field => {    
                                                                         
                             switch (field.name) {
+                                case 'Location':
+                                    const locationValue = field.value; // The actual string value of the location field
+                                    console.log(locationValue)
+                                    // Assuming locationValue contains the name of the location, directly set it
+                                    // This approach assumes the locationValue is directly usable, adjust as needed
+                                    shackData.info.activeLocation = categorizeLocation(locationValue);
+                                    break;
                                 case 'Shack Name':
                                     const parts2 = field.value.split(' '); // Split the value by spaces
                                     let shackName = "";
@@ -115,32 +123,35 @@ module.exports = {
                                         if (shackName.length > 0) shackName += " "; // Add a space between parts
                                         shackName += part;
                                     }
-                                    const activeLocation2 = shackData.info.activeLocation;
+                                    const activeLocation2 = categorizeLocation(embed.fields[2].value);
                                     const locationKey = activeLocation2.toLowerCase(); // Ensure this matches your object keys accurately
                                     // Count taco emojis in the value string
                                     expansionLevel = (field.value.match(/🌮/g) || []).length;
                                     shackData.info.shackName = shackName.trim(); // Set the extracted shack name
+                                    console.log(shackData.info.shackName)
+                                    console.log(`location is ${shackData.location[locationKey]}`)
+                                    console.log(`info is ${shackData.location[locationKey].info}`)
                                     shackData.location[locationKey].info.expansionLevel = expansionLevel; // Set the expansion level based on taco emoji count
                                     break;
                                 case 'Franchise':
                                 case 'Franchise | Recruiter':
                                 case 'Franchise | Co-Owner':
                                 case 'Franchise | Owner':
-                                    // Handling franchise status based on field value
-                                    const parts = field.value.split('|').map(part => part.trim());
-                                    shackData.info.franchise = parts[0];
-                                    shackData.info.franchiseStatus = parts.length > 1 ? parts[1] : 'employee';
-                                    break;
-                                case 'Location':
-                                    // Example of categorizing location based on field value
-                                    const locationValue = field.value; // The actual string value of the location field
-                                    console.log(locationValue)
-                                    // Assuming locationValue contains the name of the location, directly set it
-                                    // This approach assumes the locationValue is directly usable, adjust as needed
-                                    shackData.info.activeLocation = categorizeLocation(locationValue);
+                                    shackData.info.franchise = field.value;
+                                    // Dynamically determine the role based on the field name
+                                    if (field.name.includes('Recruiter')) {
+                                        shackData.info.franchiseStatus = 'Recruiter';
+                                    } else if (field.name.includes('Co-Owner')) {
+                                        shackData.info.franchiseStatus = 'Co-Owner';
+                                    } else if (field.name.includes('Owner')) {
+                                        shackData.info.franchiseStatus = 'Owner';
+                                    } else {
+                                        // Default case if none of the specific roles are matched
+                                        shackData.info.franchiseStatus = 'employee';
+                                    }
                                     break;
                                 case 'Income (per hour)':
-                                    const activeLocation1 = shackData.info.activeLocation;
+                                    const activeLocation1 = categorizeLocation(embed.fields[2].value);
                                     // Split the value to separate income and tacos per hour
                                     const incomeParts = field.value.split('|').map(part => part.trim());
                                     // Use regex to find matches for base income and boosts within brackets
@@ -162,7 +173,7 @@ module.exports = {
                                     break;
                                 case 'Balance':
                                     const balance = field.value.split('$')[1].replace(/,/g, '');
-                                    const activeLocation = shackData.info.activeLocation;
+                                    const activeLocation = categorizeLocation(embed.fields[2].value);
                                 
                                     // Ensure the location is valid and info structure exists
                                     if (shackData.location[activeLocation] && shackData.location[activeLocation].info) {
@@ -185,7 +196,7 @@ module.exports = {
 
                         });
                         // console.log(JSON.stringify(shackData, null, 2)); // After setting properties
-                        const activeLocation = shackData.info.activeLocation;
+                        const activeLocation = categorizeLocation(embed.fields[2].value);
                         console.log(shackData.location[activeLocation])
                         // After processing all fields, save userData under a single key
                         if (Object.keys(shackData).length > 0) {

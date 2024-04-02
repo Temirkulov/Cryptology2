@@ -217,7 +217,8 @@ module.exports = {
                             console.log(`Field ${index + 1}: Name: ${field.name}, Value: ${field.value}`)});            
         
                         if (embed.title ) {
-                            message.reply({ content: embed.title });
+                            // message.reply({ content: embed.title });
+                            console.log("Embed title:", embed.title);
                         } else {
                             // The embed does not have an author name
                             console.log({ content: "No author name" });
