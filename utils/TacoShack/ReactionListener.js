@@ -32,6 +32,33 @@ function categorizeLocation(locationString) {
     return "Unknown Location";
 }
 
+function categorizeLocationAndExpansion(locationString) {
+    const keywordToLocation = {
+        "City Shack": {location: "city", expansionEmoji: "🌭"},
+        "Amusement Park Shack": {location: "amusement", expansionEmoji: "🎡"},
+        "Taco Shack": {location: "taco", expansionEmoji: "🚚"},
+        "Mall Shack": {location: "mall", expansionEmoji: "🛒"},
+        "Beach Shack": {location: "beach", expansionEmoji: "🍦"},
+    };
+
+    let categorizedLocation = "Unknown Location";
+    let expansion = false;
+
+    // Attempt to match location string to one of the keywords
+    for (const [keyword, details] of Object.entries(keywordToLocation)) {
+        if (locationString.includes(keyword)) {
+            categorizedLocation = details.location;
+            // Check if the expansion emoji is present in the location string
+            expansion = locationString.includes(details.expansionEmoji);
+            break; // Stop looping once a match is found
+        }
+    }
+
+    return { categorizedLocation, expansion };
+}
+
+
+
 module.exports = {
     handleTacoShackReactionAdd: async function (client) {
         const profile = require('./Profile.js');
@@ -46,7 +73,7 @@ module.exports = {
                 await delay(2000);
                 // console.log("Reacting to TacoShack bot message...")
                 if (message.embeds.length > 0) {
-                    const validTitles = ["Upgrades", "Employees", "Decorations"];
+                    const validTitles = ["Upgrades", "Employees", "Decorations", "Advertisements"];
                     const TitleEmbed = message.embeds[0];
                     const firstField = message.embeds[0].fields[0];
                     if (firstField && (firstField.name.includes("Shack Name") || firstField.value.includes("Shack Name"))) {
@@ -109,12 +136,13 @@ module.exports = {
                             switch (field.name) {
                                 case 'Location':
                                     const locationValue = field.value; // The actual string value of the location field
-                                    console.log(locationValue)
-                                    // Assuming locationValue contains the name of the location, directly set it
-                                    // This approach assumes the locationValue is directly usable, adjust as needed
-                                    shackData.info.activeLocation = categorizeLocation(locationValue);
+                                    console.log(locationValue);
+                                    // Use the new function to get both location and expansion status
+                                    const { categorizedLocation, expansion } = categorizeLocationAndExpansion(locationValue);
+                                    shackData.info.activeLocation = categorizedLocation;
+                                    shackData.location[categorizedLocation].info.expansion = expansion;
                                     break;
-                                case 'Shack Name':
+                                    case 'Shack Name':
                                     const parts2 = field.value.split(' '); // Split the value by spaces
                                     let shackName = "";
                                     let expansionLevel = 0; // Initialize expansion level
@@ -124,6 +152,7 @@ module.exports = {
                                         shackName += part;
                                     }
                                     const activeLocation2 = categorizeLocation(embed.fields[2].value);
+                                    console.log(activeLocation2)
                                     const locationKey = activeLocation2.toLowerCase(); // Ensure this matches your object keys accurately
                                     // Count taco emojis in the value string
                                     expansionLevel = (field.value.match(/🌮/g) || []).length;
@@ -266,7 +295,7 @@ module.exports = {
 
             } else return;
 
-            } else message.channel.send(`no embed!`);
+            } else return;
         }
         });
     }
