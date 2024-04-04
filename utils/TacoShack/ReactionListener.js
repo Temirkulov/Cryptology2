@@ -32,6 +32,7 @@ function categorizeLocation(locationString) {
     return "Unknown Location";
 }
 
+
 function categorizeLocationAndExpansion(locationString) {
     const keywordToLocation = {
         "City Shack": {location: "city", expansionEmoji: "🌭"},

@@ -197,88 +197,120 @@ function calculateNextLevelCost(level, initialCost) {
 // }
 
 // Prepare the Discord embed
+
 async function prepareUpgradeRecommendationEmbed(userId) {
-    const optimalUpgrades = await calculateDynamicOptimalUpgrades(userId);
-    // const optimalUpgradesText = optimalUpgrades.map((upgrade, index) =>
-    //     `**${index + 1}. ${upgrade.upgradeName.charAt(0).toUpperCase() + upgrade.upgradeName.slice(1)}**`
-    // ).join('\n');
+    const result = await calculateDynamicOptimalUpgrades(userId);
+    const optimalUpgrades = result.upgrades;
+    const totalCost = result.totalCost;
+    const userData = await db.get(`shackData.${userId}`) || {};
+    const beautifiedLocation = beautifyLocation(userData.info.activeLocation); // Assuming userData is your user data object
+
+    // Build the description string with a list of upgrades and their costs
+    let description = optimalUpgrades.map((upgrade, index) => {
+        const upgradeName = `${upgrade.upgradeName.charAt(0).toUpperCase()}${upgrade.upgradeName.slice(1)}`; // Capitalize first letter
+        return `**${index + 1}.** \`${upgradeName}\` - $${upgrade.nextLevelCost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+    }).join('\n');
+
+    // Check if the list of upgrades is shorter than expected, implying some are fully upgraded
+    if (optimalUpgrades.length < 15) {
+        description += '\n\n*Some upgrades may have reached their maximum level.*';
+    }
+
+    description += `\n\n**Total Cost**: $${totalCost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 
     const embed = new EmbedBuilder()
         .setColor('#FFD700')
         .setTitle('Optimal Upgrades Recommendation')
-        .setDescription('Here are your recommended upgrades:')
-        .setTimestamp()
-        optimalUpgrades.forEach((upgrade, index) => {
-            const name = `**${index + 1}. ${upgrade.upgradeName.charAt(0).toUpperCase() + upgrade.upgradeName.slice(1)}**`; // Capitalize the first letter
-            const details = `Next Level: ${upgrade.nextLevel} - Cost: $${upgrade.nextLevelCost.toLocaleString()}, Boost: +${upgrade.boost}/hr`;
-            embed.addFields({ name, 
-                value: details, inline: true });
-        });
+        .setDescription(description)
+        .setFooter({ text: `Upgrades for: ${beautifiedLocation}` })
+        .setTimestamp();
 
     return embed;
 }
-
-async function calculateDynamicOptimalUpgrades(userId, totalRecommendations = 15) {
+async function calculateDynamicOptimalUpgrades(userId) {
     const userData = await db.get(`shackData.${userId}`) || {};
-    if (!userData.info || !userData.location) {
+    if (Object.keys(userData).length === 0) {
         console.log(`No data found for user ${userId}.`);
-        return [];
+        return { upgrades: [], totalCost: 0 };
     }
-    
-    // Assuming this is how you get the active location and its data
+
     const activeLocation = userData.info.activeLocation;
+    const expansionActive = userData.location[activeLocation].info.expansion; // true or false
     const locationData = userData.location[activeLocation];
-    // Replace 'upgradeDefinitionsPath' with the actual path to your upgrade definitions
-    const upgradeDefinitions = require('./shackData.json').locations[activeLocation];
-    
-    let recommendations = [];
-    let upgradeCandidates = [];
+    const locationUpgradeDefinitions = upgradeDefinitions[activeLocation]; // Make sure this correctly points to your upgrades definitions.
 
-    // Initialize candidates with current levels and basic info
-    for (let type in locationData) {
-        for (let name in locationData[type]) {
-            let def = upgradeDefinitions[type][name];
-            if (def) {
-                upgradeCandidates.push({
-                    name,
-                    type,
-                    currentLevel: locationData[type][name],
-                    maxLevel: def.max,
-                    initialPrice: def.initialPrice,
-                    boost: def.boost,
-                    nextLevelCost: calculateNextLevelCost(locationData[type][name] + 1, def.initialPrice),
-                });
-            }
-        }
+    let availableUpgrades = [];
+    let selectedUpgrades = [];
+    let totalCost = 0;
+
+    const types = ['upgrades', 'hire', 'decorations', 'advertisements'];
+    if (expansionActive) {
+        types.push(expansionMapping[activeLocation]);
     }
 
-    // Function to update candidates' nextLevelCost and sort by cost effectiveness
-    function updateAndSortCandidates() {
-        upgradeCandidates.forEach(candidate => {
-            candidate.nextLevelCost = calculateNextLevelCost(candidate.currentLevel + 1, candidate.initialPrice);
-            candidate.costPerIncome = candidate.nextLevelCost / candidate.boost; // Adjust if using a different metric
+    // Initialize all upgrades
+    types.forEach(type => {
+        const upgradesOfType = locationData[type];
+        if (!upgradesOfType) return;
+
+        Object.entries(upgradesOfType).forEach(([upgradeName, currentLevel]) => {
+            const upgradeDef = locationUpgradeDefinitions[type]?.[upgradeName];
+            if (!upgradeDef || currentLevel >= upgradeDef.max) return;
+
+            availableUpgrades.push({ upgradeName, currentLevel, type });
+        });
+    });
+
+    // Dynamically select the next optimal upgrades
+    for (let i = 0; i < 15; i++) {
+        let bestUpgrade = null;
+        let bestCostPerIncome = Infinity;
+
+        availableUpgrades.forEach(upgrade => {
+            const upgradeDef = locationUpgradeDefinitions[upgrade.type]?.[upgrade.upgradeName];
+            const nextLevelCost = calculateNextLevelCost(upgrade.currentLevel + 1, upgradeDef.initialPrice);
+            const costPerIncome = nextLevelCost / upgradeDef.boost;
+
+            if (costPerIncome < bestCostPerIncome) {
+                bestUpgrade = { ...upgrade, nextLevelCost, boost: upgradeDef.boost, costPerIncome };
+                bestCostPerIncome = costPerIncome;
+            }
         });
 
-        // Sort by costPerIncome, lowest first
-        upgradeCandidates.sort((a, b) => a.costPerIncome - b.costPerIncome);
+        if (!bestUpgrade) break;
+
+        // Update the selected upgrade's level for future iterations
+        const upgradeIndex = availableUpgrades.findIndex(upgrade => upgrade.upgradeName === bestUpgrade.upgradeName);
+        availableUpgrades[upgradeIndex].currentLevel += 1;
+        if (availableUpgrades[upgradeIndex].currentLevel >= locationUpgradeDefinitions[availableUpgrades[upgradeIndex].type]?.[availableUpgrades[upgradeIndex].upgradeName].max) {
+            // Remove the upgrade if it has reached its max level
+            availableUpgrades.splice(upgradeIndex, 1);
+        }
+
+        selectedUpgrades.push(bestUpgrade);
+        totalCost += bestUpgrade.nextLevelCost;
     }
 
-    // Generate recommendations
-    while (recommendations.length < totalRecommendations && upgradeCandidates.length > 0) {
-        updateAndSortCandidates();
-        let bestCandidate = upgradeCandidates[0];
+    // Prioritize 'tipjar' and 'appliances' by ensuring they are at the front if they appear
+    const priorityUpgrades = ['tipjar', 'appliances'];
+    const prioritizedUpgrades = selectedUpgrades.sort((a, b) => priorityUpgrades.indexOf(a.upgradeName) - priorityUpgrades.indexOf(b.upgradeName));
 
-        // Check if it's still under maxLevel and add to recommendations
-        if (bestCandidate.currentLevel < bestCandidate.maxLevel) {
-            recommendations.push({ ...bestCandidate, nextLevel: bestCandidate.currentLevel + 1 });
-            bestCandidate.currentLevel++; // Prepare for next iteration
+    return { upgrades: prioritizedUpgrades, totalCost };
+}
+
+function updateUpgradeCostAndRoi(allUpgrades, selectedUpgrade, definitions) {
+    const upgradeIndex = allUpgrades.findIndex(upgrade => upgrade.upgradeName === selectedUpgrade.upgradeName);
+    if (upgradeIndex !== -1) {
+        const upgradeDef = definitions[selectedUpgrade.type]?.[selectedUpgrade.upgradeName];
+        const nextLevel = selectedUpgrade.currentLevel + 1;
+        if (nextLevel < upgradeDef.max) {
+            const nextLevelCost = calculateNextLevelCost(nextLevel + 1, upgradeDef.initialPrice);
+            const roi = nextLevelCost / upgradeDef.boost;
+            allUpgrades[upgradeIndex] = { ...allUpgrades[upgradeIndex], currentLevel: nextLevel, nextLevelCost, roi };
         } else {
-            // Remove from candidates if maxed out
-            upgradeCandidates.shift();
+            allUpgrades.splice(upgradeIndex, 1); // Remove the upgrade if it has reached its max level
         }
     }
-
-    return recommendations;
 }
 
 // Prioritize specific upgrades by moving them to the front of the list
@@ -292,6 +324,19 @@ function prioritizeUpgrades(upgrades, priorities) {
     );
     
     return [...prioritizedUpgrades, ...nonPrioritizedUpgrades];
+}
+
+function beautifyLocation(activeLocationKey) {
+    const locationMap = {
+        city: "🏙 City Shack",
+        amusement: "🎢 Amusement Park Shack",
+        taco: "🌮 Taco Shack",
+        mall: "🏬 Mall Shack",
+        beach: "⛱ Beach Shack"
+    };
+    
+    // Return the beautified version if found, else default to the key itself
+    return locationMap[activeLocationKey] || activeLocationKey;
 }
 
 
