@@ -2,6 +2,20 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { QuickDB } = require("quick.db");
 const db = new QuickDB();
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 module.exports = {
     profileHandler: function (client) {
     client.on('interactionCreate', async (interaction) => {

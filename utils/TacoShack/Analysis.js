@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, SelectMenuBuilder } = require('discord.js');
 const { QuickDB } = require("quick.db");
 const db = new QuickDB();
 const shackData = require('./shackData.json');
@@ -198,43 +198,65 @@ function calculateNextLevelCost(level, initialCost) {
 
 // Prepare the Discord embed
 
-async function prepareUpgradeRecommendationEmbed(userId) {
-    const result = await calculateDynamicOptimalUpgrades(userId);
-    const optimalUpgrades = result.upgrades;
-    const totalCost = result.totalCost;
+async function prepareUpgradeRecommendationEmbed(userId, selectedLocation = null) {
     const userData = await db.get(`shackData.${userId}`) || {};
-    const beautifiedLocation = beautifyLocation(userData.info.activeLocation); // Assuming userData is your user data object
+    // Determine the location to use for the calculation - either the selected one or the user's current active location
+    const activeLocation = selectedLocation || userData.info.activeLocation;
+    const result = await calculateDynamicOptimalUpgrades(userId, activeLocation); // Updated to pass selectedLocation
+    const beautifiedLocation = beautifyLocation(activeLocation); // Use the updated activeLocation
 
-    // Build the description string with a list of upgrades and their costs
-    let description = optimalUpgrades.map((upgrade, index) => {
-        const upgradeName = `${upgrade.upgradeName.charAt(0).toUpperCase()}${upgrade.upgradeName.slice(1)}`; // Capitalize first letter
-        return `**${index + 1}.** \`${upgradeName}\` - $${upgrade.nextLevelCost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+    let description = result.upgrades.map((upgrade, index) => {
+        return `**${index + 1}.** \`${capitalizeFirstLetter(upgrade.upgradeName)}\` - $${formatNumber(upgrade.nextLevelCost)}`;
     }).join('\n');
 
-    // Check if the list of upgrades is shorter than expected, implying some are fully upgraded
-    if (optimalUpgrades.length < 15) {
+    if (result.upgrades.length < 15) {
         description += '\n\n*Some upgrades may have reached their maximum level.*';
     }
 
-    description += `\n\n**Total Cost**: $${totalCost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+    description += `\n\n**Total Cost**: $${formatNumber(result.totalCost)}`;
 
     const embed = new EmbedBuilder()
         .setColor('#FFD700')
         .setTitle('Optimal Upgrades Recommendation')
         .setDescription(description)
-        .setFooter({ text: `Upgrades for: ${beautifiedLocation}` })
-        .setTimestamp();
+        .setFooter({ text: `Upgrades for: ${beautifiedLocation}\nTo update your data, use the select menu below.` });
 
-    return embed;
+    // Define the select menu for location selection
+    const selectMenu = new ActionRowBuilder()
+        .addComponents(
+            new SelectMenuBuilder()
+                .setCustomId('select_location')
+                .setPlaceholder('Choose a location')
+                .addOptions([
+                    { label: 'City Shack', value: 'city' },
+                    { label: 'Amusement Park Shack', value: 'amusement' },
+                    { label: 'Taco Shack', value: 'taco' },
+                    { label: 'Mall Shack', value: 'mall' },
+                    { label: 'Beach Shack', value: 'beach' },
+                ])
+        );
+
+    return { embeds: [embed], components: [selectMenu] };
 }
-async function calculateDynamicOptimalUpgrades(userId) {
+
+// Helper function to capitalize the first letter of a string
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+// Helper function to format numbers with commas
+function formatNumber(number) {
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+async function calculateDynamicOptimalUpgrades(userId, selectedLocation) {
     const userData = await db.get(`shackData.${userId}`) || {};
     if (Object.keys(userData).length === 0) {
         console.log(`No data found for user ${userId}.`);
         return { upgrades: [], totalCost: 0 };
     }
 
-    const activeLocation = userData.info.activeLocation;
+    // const activeLocation = userData.info.activeLocation;
+    const activeLocation = selectedLocation
     const expansionActive = userData.location[activeLocation].info.expansion; // true or false
     const locationData = userData.location[activeLocation];
     const locationUpgradeDefinitions = upgradeDefinitions[activeLocation]; // Make sure this correctly points to your upgrades definitions.
@@ -344,10 +366,19 @@ function beautifyLocation(activeLocationKey) {
 module.exports = {
     analysisHandler: function (client) {
         client.on('interactionCreate', async (interaction) => {
+            // Handle button interaction as before
             if (interaction.isButton() && interaction.customId === 'analysis') {
                 const userId = interaction.user.id;
-                const embed = await prepareUpgradeRecommendationEmbed(userId);
-                await interaction.reply({ embeds: [embed] });
-                    }
+                const { embeds, components } = await prepareUpgradeRecommendationEmbed(userId);
+                await interaction.reply({ embeds, components });
+            }
+            // Handle select menu interaction
+            if (interaction.isSelectMenu() && interaction.customId === 'select_location') {
+                const userId = interaction.user.id;
+                const selectedLocation = interaction.values[0];
+                const { embeds, components } = await prepareUpgradeRecommendationEmbed(userId, selectedLocation);
+                await interaction.update({ embeds, components });
+            }
         });
-    }};
+    }
+};
