@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, SelectMenuBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, SlashCommandBuilder } = require('discord.js');
 const { QuickDB } = require("quick.db");
 const db = new QuickDB();
 const shackData = require('./shackData.json');
@@ -222,21 +222,39 @@ async function prepareUpgradeRecommendationEmbed(userId, selectedLocation = null
         .setFooter({ text: `Upgrades for: ${beautifiedLocation}\nTo update your data, use the select menu below.` });
 
     // Define the select menu for location selection
-    const selectMenu = new ActionRowBuilder()
-        .addComponents(
-            new SelectMenuBuilder()
-                .setCustomId('select_location')
-                .setPlaceholder('Choose a location')
-                .addOptions([
-                    { label: 'City Shack', value: 'city' },
-                    { label: 'Amusement Park Shack', value: 'amusement' },
-                    { label: 'Taco Shack', value: 'taco' },
-                    { label: 'Mall Shack', value: 'mall' },
-                    { label: 'Beach Shack', value: 'beach' },
-                ])
-        );
+    const selectMenu = new StringSelectMenuBuilder()
+        .setCustomId('select_location')
+        .setPlaceholder(beautifiedLocation)
+        .addOptions(
+            // new StringSelectMenuBuilder.Option('City Shack'),
+            new StringSelectMenuOptionBuilder()
+            .setLabel('City Shack')
+            .setValue('city'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Amusement Park Shack')
+            .setValue('amusement'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Taco Shack')
+            .setValue('taco'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Mall Shack')
+            .setValue('mall'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Beach Shack')
+            .setValue('beach')
+            );
 
-    return { embeds: [embed], components: [selectMenu] };
+    // Create the button
+    const button = new ButtonBuilder()
+        .setCustomId('profile')
+        .setLabel('Profile')
+        .setStyle(ButtonStyle.Primary);
+
+    // Group them in an ActionRow
+    const actionRowButton = new ActionRowBuilder().addComponents(button);
+    const actionRowSelectMenu = new ActionRowBuilder().addComponents(selectMenu);
+    
+    return { embeds: [embed], components: [actionRowSelectMenu, actionRowButton] };
 }
 
 // Helper function to capitalize the first letter of a string
@@ -366,6 +384,13 @@ function beautifyLocation(activeLocationKey) {
 module.exports = {
     analysisHandler: function (client) {
         client.on('interactionCreate', async (interaction) => {
+            if (interaction.isStringSelectMenu() && interaction.customId === 'select_location') {
+                const userId = interaction.user.id;
+                const selectedLocation = interaction.values[0];
+                const { embeds, components } = await prepareUpgradeRecommendationEmbed(userId, selectedLocation);
+                await interaction.update({ embeds, components });
+            }
+
             // Handle button interaction as before
             if (interaction.isButton() && interaction.customId === 'analysis') {
                 const userId = interaction.user.id;
@@ -373,12 +398,6 @@ module.exports = {
                 await interaction.reply({ embeds, components });
             }
             // Handle select menu interaction
-            if (interaction.isSelectMenu() && interaction.customId === 'select_location') {
-                const userId = interaction.user.id;
-                const selectedLocation = interaction.values[0];
-                const { embeds, components } = await prepareUpgradeRecommendationEmbed(userId, selectedLocation);
-                await interaction.update({ embeds, components });
-            }
         });
     }
 };

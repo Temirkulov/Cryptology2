@@ -32,11 +32,11 @@
         "tv": { "max0": 2, "max1": 5, "max2": 10, "max": 15,"initialPrice": 5500, "boost": 160 },
         "blimp": { "max0": 1, "max1": 2, "max2": 3, "max": 3,"initialPrice": 250000, "boost": 200 }
     }, "truck": {
-        "register": { "max0": 20, "max1": 20, "max2": 20, "max": 20,"initialPrice": 100, "boost": 50 },
-        "assistant": { "max0": 15, "max1": 15, "max2": 15, "max": 15,"initialPrice": 100, "boost": 100 },
-        "driver": { "max0": 10, "max1": 10, "max2": 10, "max": 10,"initialPrice": 100, "boost": 250 },
-        "kitchen": { "max0": 5, "max1": 5, "max2": 5, "max": 5,"initialPrice": 100, "boost": 400 },
-        "engine": { "max0": 3, "max1": 3, "max2": 3, "max": 3,"initialPrice": 100, "boost": 1000 }
+        "register": { "max0": 20, "max1": 20, "max2": 20, "max": 20,"initialPrice": 5000, "boost": 50 },
+        "assistant": { "max0": 15, "max1": 15, "max2": 15, "max": 15,"initialPrice": 10000, "boost": 100 },
+        "driver": { "max0": 10, "max1": 10, "max2": 10, "max": 10,"initialPrice": 25000, "boost": 250 },
+        "kitchen": { "max0": 5, "max1": 5, "max2": 5, "max": 5,"initialPrice": 100000, "boost": 400 },
+        "engine": { "max0": 3, "max1": 3, "max2": 3, "max": 3,"initialPrice": 1000000, "boost": 1000 }
 }
       },
       "beach": {
@@ -149,12 +149,12 @@
         "tv": { "max0": 2, "max1": 5, "max2": 10, "max": 15,"initialPrice": 5500, "boost": 160 },
         "blimp": { "max0": 1, "max1": 2, "max2": 3, "max": 3,"initialPrice": 250000, "boost": 200 }
     }, "kiosk": {
-        "register": { "max0": 20, "max1": 20, "max2": 20, "max": 20,"initialPrice": 100, "boost": 50 },
-        "assistant": { "max0": 15, "max1": 15, "max2": 15, "max": 15,"initialPrice": 100, "boost": 100 },
-        "driver": { "max0": 10, "max1": 10, "max2": 10, "max": 10,"initialPrice": 100, "boost": 250 },
-        "kitchen": { "max0": 5, "max1": 5, "max2": 5, "max": 5,"initialPrice": 100, "boost": 400 },
-        "engine": { "max0": 3, "max1": 3, "max2": 3, "max": 3,"initialPrice": 100, "boost": 1000 }
-}
+        "taco": { "max0": 20, "max1": 20, "max2": 20, "max": 20,"initialPrice": 7500, "boost": 50 },
+        "repair": { "max0": 15, "max1": 15, "max2": 15, "max": 15,"initialPrice": 15000, "boost": 100 },
+        "froyo": { "max0": 15, "max1": 15, "max2": 15, "max": 15,"initialPrice": 50000, "boost": 250 },
+        "photo": { "max0": 10, "max1": 10, "max2": 10, "max": 10,"initialPrice": 150000, "boost": 400 },
+        "merch": { "max0": 1, "max1": 1, "max2": 1, "max": 1,"initialPrice": 5000000, "boost": 2500 }
+    }
       },
       "amusement": {
         "expansionLevels":4,
