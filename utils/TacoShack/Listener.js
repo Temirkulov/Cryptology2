@@ -184,7 +184,7 @@ async function updateHQInfoFromEmbed(userId, embedFields) {
                 const bonuses = field.value.split('\n');
                 for (const bonus of bonuses) {
                     if (bonus.includes('Income:')) {
-                        parsedData.income = parseInt(bonus.match(/\+\$(\d+)/)[1], 10);
+                        parsedData.income = parseInt(bonus.replace(/,+/g, '').match(/\+\$(\d+)/)[1], 10);
                     } else if (bonus.includes('Tip:')) {
                         parsedData.tip = parseFloat(bonus.match(/\+(\d+)%/)[1]) / 100;
                     } else if (bonus.includes('Work:')) {

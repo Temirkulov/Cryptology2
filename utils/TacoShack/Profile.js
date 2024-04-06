@@ -185,14 +185,14 @@ async function calculateFinancialProgress(userId) {
 }
 function getFranchiseStatusIncomeBonus(franchiseStatus) {
     switch (franchiseStatus) {
-        case 'employee':
+        case 'Employee':
             return 100;
-        case 'recruiter':
+        case 'Recruiter':
             return 150;
-        case 'co-owner':
-            return 200;
-        case 'owner':
+        case 'Co-Owner':
             return 250;
+        case 'Owner':
+            return 300;
         default:
             return 0; // Default case if no match is found
     }
@@ -229,14 +229,17 @@ async function calculateIncomeDetails(userId) {
     const menuIncome = 2600;
     const maxHqIncome = 14000;
     const levelIncome = levelIncomeBonus;
-
+    const maxLevelIncome = 1700;
     let actualIncome = levelIncome + franchiseIncome + hqIncome + menuIncome;
     let maxedIncome = levelIncome + franchiseIncome + hqIncome + menuIncome;
-    let fullyMaxedIncome = levelIncome + franchiseIncome + maxHqIncome + menuIncome;
+    let fullyMaxedIncome = maxLevelIncome + franchiseIncome + maxHqIncome + menuIncome;
 
     const types = ['upgrades', 'hire', 'decorations', 'advertisements'];
     if (locationData.info.expansion) {
         types.push(expansionMapping[activeLocation]); // Ensure this is defined to match your data structure
+        actualIncome += 1000;
+        maxedIncome += 1000;
+        fullyMaxedIncome += 1000;
     }
 
     const calculateIncomeForType = (typeData, upgradeDef, max = false) => {
@@ -254,16 +257,16 @@ async function calculateIncomeDetails(userId) {
         const typeData = locationData[type] || {};
         actualIncome += calculateIncomeForType(typeData, upgradeDefinitions[type]);
         maxedIncome += calculateIncomeForType(typeData, upgradeDefinitions[type], true);
+        fullyMaxedIncome += calculateIncomeForType(typeData, upgradeDefinitions[type], true);
     });
 
     // Assuming storedCurrentIncome is the income value stored for the active location
     const storedCurrentIncome = locationData.info.income;
     const glitchedIncome = storedCurrentIncome - actualIncome;
     const currentMaxedIncome = maxedIncome + glitchedIncome; // Maxed income adjusted for glitches
-    fullyMaxedIncome +=  maxedIncome + glitchedIncome - (hqIncome); // Fully maxed income with maximum HQ benefit and adjusted for glitches
-    let potentialCurrentIncome = currentMaxedIncome - storedCurrentIncome
-    const currentMaxHQincome = storedCurrentIncome + maxHqIncome - hqIncome; // Current income with maximum HQ benefit
-
+    const potentialCurrentIncome = currentMaxedIncome - storedCurrentIncome
+    const hqmaxdifference = maxHqIncome - hqIncome;
+    const currentMaxHQincome = currentMaxedIncome + hqmaxdifference; // Current income with maximum HQ benefit
 
     return {
         actualIncome,
@@ -313,42 +316,48 @@ async function calculateCurrentAndPotentialIncome(userId) {
 
     return { currentIncome, potentialIncome };
 }
+function beautifyLocation(activeLocationKey) {
+    const locationMap = {
+        city: "🏙 City Shack",
+        amusement: "🎢 Amusement Park Shack",
+        taco: "🌮 Taco Shack",
+        mall: "🏬 Mall Shack",
+        beach: "⛱ Beach Shack"
+    };
+    
+    // Return the beautified version if found, else default to the key itself
+    return locationMap[activeLocationKey] || activeLocationKey;
+}
 
 module.exports = {
     profileHandler: function (client) {
         client.on('interactionCreate', async (interaction) => {
             if (interaction.isButton() && interaction.customId === 'profile') {
                 const userId = interaction.user.id;
-                
+                const userData = await db.get(`shackData.${userId}`) || {};
                 // Use the functions to gather data for the user
                 const optimalUpgradesData = await calculateDynamicOptimalUpgrades(userId, null); // Using null for selectedLocation as a default
                 const financialProgress = await calculateFinancialProgress(userId);
                 const percentageMaxed = await calculatePercentageMaxed(userId);
                 const incomeDetails = await calculateIncomeDetails(userId);
                 // const glitchedIncome = await calculateGlitchedIncome(userId);
-                
+                const beautifiedLocation = beautifyLocation(userData.info.activeLocation);
                 const embed = new EmbedBuilder()
-                    .setColor('#0099ff')
-                    .setTitle(`${interaction.user.username}'s Profile`)
-                    .setDescription(`Your profile details and upgrade recommendations.`)
-                    .addFields(
-                        { name: 'Percentage Maxed', value: `${financialProgress.percentageMaxed}%`, inline: true },
-                        { name: 'Current Income', value: `$${incomeDetails.storedCurrentIncome}`, inline: true },
-                        { name: 'Potential Income', value: `$${incomeDetails.potentialCurrentIncome}`, inline: true },
-                        { name: 'Total Cost for Recommended Upgrades', value: `$${optimalUpgradesData.totalCost.toLocaleString()}`, inline: false },
-                        { name: 'Total Spent', value: `$${financialProgress.totalSpent}`, inline: true },
-                        { name: 'Total to Max', value: `$${financialProgress.totalToMax}`, inline: true },
-                        { name: 'Total Left to Max', value: `$${financialProgress.totalLeft}`, inline: true },
-                        { name: 'Actual Income', value: `$${incomeDetails.actualIncome.toLocaleString()}`, inline: true },
-                        { name: 'Maxed HQ Income (Current)', value: `$${incomeDetails.currentMaxHQincome.toLocaleString()}`, inline: true },
-                        { name: 'Glitched Income', value: `$${incomeDetails.glitchedIncome.toLocaleString()}`, inline: true },
-                        { name: 'Maxed Income (Current)', value: `$${incomeDetails.maxedIncome.toLocaleString()}`, inline: true },
-                        { name: 'Maxed Income (With Glitch)', value: `$${incomeDetails.currentMaxedIncome.toLocaleString()}`, inline: true },
-                        { name: 'Fully Maxed Income (No Glitch)', value: `$${incomeDetails.fullyMaxedIncome.toLocaleString()}`, inline: true }
-    
-                    )
-                    // You can add more fields based on the data you have
-                    
+                .setColor('#FFB6C1')
+                .setTitle(`${interaction.user.username}'s Profile`)
+                .setDescription(`**Profile Income Analysis**`)
+                .setThumbnail(interaction.user.displayAvatarURL())
+                .setFooter({ text: `${interaction.user.username} | ${beautifiedLocation}` })
+                .addFields(
+                    // Group related financial progress details together
+                    { name: 'Financial Progress', value: `**Percentage Maxed**: ${financialProgress.percentageMaxed}%\n**Total Spent**: $${financialProgress.totalSpent.toLocaleString()}\n**Total to Max**: $${financialProgress.totalToMax.toLocaleString()}\n**Total Left to Max**: $${financialProgress.totalLeft.toLocaleString()}`, inline: false },
+            
+                    // Group income details together
+                    { name: 'Income Analysis', value: `**Current Income**: $${incomeDetails.storedCurrentIncome.toLocaleString()}\n**Income Left**: $${incomeDetails.potentialCurrentIncome.toLocaleString()}\n**Current Income (Max HQ)**: $${incomeDetails.currentMaxHQincome.toLocaleString()}\n**Actual Income**: $${incomeDetails.actualIncome.toLocaleString()}\n**Maxed Income**: $${incomeDetails.maxedIncome.toLocaleString()}`, inline: false },
+            
+                    // Glitched Income details
+                    { name: 'Glitched Income Analysis', value: `**Glitched Income**: $${incomeDetails.glitchedIncome.toLocaleString()}\n**Maxed Income (With Glitch)**: $${incomeDetails.currentMaxedIncome.toLocaleString()}\n**Fully Maxed Income**: $${incomeDetails.fullyMaxedIncome.toLocaleString()}`, inline: false }
+                )
                 await interaction.reply({ embeds: [embed] });
             }
         });
