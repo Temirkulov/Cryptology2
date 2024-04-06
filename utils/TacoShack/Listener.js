@@ -11,15 +11,6 @@ const {
     // categorizeEmbed
 } = require('./dataUtilities');
 const { defaultShackData } = require('./shackDataStructure');
-function setActiveLocation(shackData, activeLocation) {
-    // Ensure shackData and shackData.info are defined
-    if (shackData && shackData.info) {
-        shackData.info.activeLocation = activeLocation;
-        console.log(`Active location set to '${activeLocation}'.`);
-    } else {
-        console.error("setActiveLocation called with undefined shackData or shackData.info");
-    }
-}
 
 
 function categorizeLocation(locationString) {
@@ -167,40 +158,57 @@ async function updateHQData(shackData, parsedHQData, userId) {
     Object.entries(parsedHQData.hire).forEach(([key, value]) => {
         shackData.hq.hire[key] = value;
     });
-
     // Ensure you're setting the entire shackData object and not just the hq part
     await db.set(`shackData.${userId}`, shackData);
     console.log(`HQ data updated and saved for user ${userId}.`);
 }
 
-// This assumes you have a function named parseHQEmbed that correctly extracts the HQ-related data from the embed description
-// and categorizes it into either 'upgrades' or 'employees' based on the content.
-async function handleHQEmbedUpdate(newMessage, userId) {
-    const title = newMessage.embeds[0].title || '';
-    const categoryhq = title.includes('Employees') ? 'employees' : 'upgrades';
-    const parsedHQData = parseHQEmbed(newMessage.embeds[0].description);
+async function updateHQInfoFromEmbed(userId, embedFields) {
+    let parsedData = {
+        balance: 0,
+        income: 0,
+        tip: 0,
+        work: 0,
+        overtime: 0,
+        lunchRush: 0,
+        taskMultiplier: 0,
+        totalTacosSold: 0
+    };
 
-    // Fetch existing data or create a new instance if not found
-    let shackData = await db.get(`shackData.${userId}`) || getNewShackDataInstance();
+    for (const field of embedFields) {
+        switch (field.name) {
+            case 'Balance':
+                parsedData.balance = parseInt(field.value.replace(/[^\d]/g, ''), 10);
+                break;
+            case 'Bonuses':
+                const bonuses = field.value.split('\n');
+                for (const bonus of bonuses) {
+                    if (bonus.includes('Income:')) {
+                        parsedData.income = parseInt(bonus.match(/\+\$(\d+)/)[1], 10);
+                    } else if (bonus.includes('Tip:')) {
+                        parsedData.tip = parseFloat(bonus.match(/\+(\d+)%/)[1]) / 100;
+                    } else if (bonus.includes('Work:')) {
+                        parsedData.work = parseFloat(bonus.match(/\+(\d+)%/)[1]) / 100;
+                    } else if (bonus.includes('Overtime:')) {
+                        parsedData.overtime = parseFloat(bonus.match(/(\d+)x Money/)[1]);
+                    } else if (bonus.includes('Lunch Rush:')) {
+                        parsedData.lunchRush = parseInt(bonus.match(/\+(\d+) Hours/)[1], 10);
+                    } else if (bonus.includes('Task Multiplier:')) {
+                        parsedData.taskMultiplier = parseFloat(bonus.match(/(\d+)x Task Rewards/)[1]);
+                    }
+                }
+                break;
+            case 'Total Tacos Sold':
+                parsedData.totalTacosSold = parseInt(field.value.replace(/[^\d]/g, ''), 10);
+                break;
+        }
+    }
 
-    // Update HQ data
-    await updateHQData(shackData, categoryhq, parsedHQData, userId);
+    // Update the database with parsedData
+    await db.set(`shackData.${userId}.hq.info`, parsedData);
+    console.log(`HQ information updated for user ${userId}`);
 }
 
-
-async function handleEmbedUpdate(embed, userId) {
-    // Determine the category from the embed title or content
-    const category = categorizeEmbed(embed.title);
-
-    // Parse the description to get the data
-    const parsedData = parseEmbedDescription(embed.description);
-
-    // Retrieve existing data or create a new instance
-    let shackData = await db.get(`shackData.${userId}`) || getNewShackDataInstance();
-
-    // Update the data in the correct category based on the parsed data
-    updateShackData(shackData, category, parsedData, userId);
-}
 
 
 
@@ -237,12 +245,11 @@ module.exports = {
                 if (newMessage.embeds.length > 0) {
                     const updatedEmbed = newMessage.embeds[0];
                     const validTitles = ["Upgrades", "Employees", "Decorations", "Advertisements", "Taco Truck Upgrades", "Mall Kiosk Upgrades", "Ice Cream Stand Upgrades", "Amusement Park Attractions", "Hotdog Cart Upgrades"];
-
-                    
-                    if (!validTitles.some(title => updatedEmbed.title && updatedEmbed.title.includes(title))) {
-                        console.log("Embed title does not match the required criteria.");
-                        return; // Exit if none of the keywords are found in the title
-                    }
+                    const firstField = updatedEmbed.fields[0];
+                    if (validTitles.some(title => updatedEmbed.title && updatedEmbed.title.includes(title))) {
+                        // console.log("Embed title does not match the required criteria.");
+                        // return; // Exit if none of the keywords are found in the title
+                    // }
                 
                     
                     // Check if footer exists and split username and location from the footer text
@@ -303,6 +310,25 @@ module.exports = {
                     } else {
                         console.log("No footer found in the embed.");
                     }
+                } else if (firstField && (firstField.name.includes("Balance") && !updatedEmbed.title.includes("Shack Headquarters"))) {
+                    const footerParts = updatedEmbed.footer.text.split('|');
+                    const username = footerParts[0].trim();
+                    const userSetupData = await db.get(`shackData`) || {};
+                    const userIds = Object.keys(userSetupData);
+                    const matchedUserId = userIds.find(id => 
+                        userSetupData[id].info && 
+                        userSetupData[id].info.username === username
+                    );
+                
+                    // Check if a matched user ID was found
+                    if (matchedUserId) {
+                        // Assuming 'updatedEmbed.fields' contains the fields from the embed you want to process
+                        await updateHQInfoFromEmbed(matchedUserId, updatedEmbed.fields);
+                        console.log(`HQ information updated for user ID: ${matchedUserId}`);
+                    } else {
+                        console.log(`No matching user found for username: ${username}`);
+                    }
+                }                
                 }
             }
         });

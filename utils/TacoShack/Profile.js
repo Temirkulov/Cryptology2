@@ -231,10 +231,11 @@ async function calculateIncomeDetails(userId) {
     // Assuming storedCurrentIncome is the income value stored for the active location
     const storedCurrentIncome = locationData.info.income;
     const glitchedIncome = storedCurrentIncome - actualIncome;
-    
     const currentMaxedIncome = maxedIncome + glitchedIncome; // Maxed income adjusted for glitches
     fullyMaxedIncome +=  maxedIncome + glitchedIncome - (hqIncome); // Fully maxed income with maximum HQ benefit and adjusted for glitches
     let potentialCurrentIncome = currentMaxedIncome - storedCurrentIncome
+    const currentMaxHQincome = storedCurrentIncome + maxHqIncome - hqIncome; // Current income with maximum HQ benefit
+
 
     return {
         actualIncome,
@@ -243,7 +244,8 @@ async function calculateIncomeDetails(userId) {
         currentMaxedIncome,
         fullyMaxedIncome,
         potentialCurrentIncome,
-        storedCurrentIncome
+        storedCurrentIncome,
+        currentMaxHQincome
     };
 }
 
@@ -304,12 +306,13 @@ module.exports = {
                     .addFields(
                         { name: 'Percentage Maxed', value: `${financialProgress.percentageMaxed}%`, inline: true },
                         { name: 'Current Income', value: `$${incomeDetails.storedCurrentIncome}`, inline: true },
-                        { name: 'Potential Income', value: `$${financialProgress.potentialCurrentIncome}`, inline: true },
+                        { name: 'Potential Income', value: `$${incomeDetails.potentialCurrentIncome}`, inline: true },
                         { name: 'Total Cost for Recommended Upgrades', value: `$${optimalUpgradesData.totalCost.toLocaleString()}`, inline: false },
                         { name: 'Total Spent', value: `$${financialProgress.totalSpent}`, inline: true },
                         { name: 'Total to Max', value: `$${financialProgress.totalToMax}`, inline: true },
                         { name: 'Total Left to Max', value: `$${financialProgress.totalLeft}`, inline: true },
                         { name: 'Actual Income', value: `$${incomeDetails.actualIncome.toLocaleString()}`, inline: true },
+                        { name: 'Maxed HQ Income (Current)', value: `$${incomeDetails.currentMaxHQincome.toLocaleString()}`, inline: true },
                         { name: 'Glitched Income', value: `$${incomeDetails.glitchedIncome.toLocaleString()}`, inline: true },
                         { name: 'Maxed Income (Current)', value: `$${incomeDetails.maxedIncome.toLocaleString()}`, inline: true },
                         { name: 'Maxed Income (With Glitch)', value: `$${incomeDetails.currentMaxedIncome.toLocaleString()}`, inline: true },
