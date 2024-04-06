@@ -219,7 +219,8 @@ module.exports = {
                                     // shackData.location.info.shackAge = parseInt(field.value.split(' ')[1]);
                                     break;
                                 case 'Level':
-                                    // shackData.info.level = parseInt(field.value.split(' ')[2]);
+                                    const level = parseInt(field.value.split(' ')[2]);
+                                    shackData.info.level = level;
                                     break;
                                 // Add more cases as needed
                             }

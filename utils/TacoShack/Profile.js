@@ -183,6 +183,32 @@ async function calculateFinancialProgress(userId) {
         totalLeft: (totalToMax - totalSpent).toLocaleString()
     };
 }
+function getFranchiseStatusIncomeBonus(franchiseStatus) {
+    switch (franchiseStatus) {
+        case 'employee':
+            return 100;
+        case 'recruiter':
+            return 150;
+        case 'co-owner':
+            return 200;
+        case 'owner':
+            return 250;
+        default:
+            return 0; // Default case if no match is found
+    }
+}
+function getLevelIncomeBonus(level) {
+    let incomeBonus = 0;
+
+    if (level >= 5) incomeBonus += 100; // Add bonus for reaching level 5
+    if (level >= 10) incomeBonus += 150; // Add bonus for reaching level 10, and so on...
+    if (level >= 15) incomeBonus += 200;
+    if (level >= 20) incomeBonus += 250;
+    if (level >= 25) incomeBonus += 400;
+    if (level >= 30) incomeBonus += 600;
+
+    return incomeBonus;
+}
 
 async function calculateIncomeDetails(userId) {
     const userData = await db.get(`shackData.${userId}`);
@@ -195,12 +221,14 @@ async function calculateIncomeDetails(userId) {
     const locationData = userData.location[activeLocation];
     const upgradeDefinitions = require('./shackData.json').locations[activeLocation];
     
-    // Base incomes
-    const franchiseIncome = 9900;
-    const hqIncome = 4500; // Current HQ income
-    const maxHqIncome = 14000; // Maximum HQ income
+    // Utility incomes
+    const franchiseIncomeBonus = getFranchiseStatusIncomeBonus(userData.info.franchiseStatus);
+    const levelIncomeBonus = getLevelIncomeBonus(userData.info.level);
+    const franchiseIncome = 9800+franchiseIncomeBonus;
+    const hqIncome = userData.hq.info.income;
     const menuIncome = 2600;
-    const levelIncome = 1700;
+    const maxHqIncome = 14000;
+    const levelIncome = levelIncomeBonus;
 
     let actualIncome = levelIncome + franchiseIncome + hqIncome + menuIncome;
     let maxedIncome = levelIncome + franchiseIncome + hqIncome + menuIncome;
@@ -330,38 +358,4 @@ module.exports = {
 
 
 
-
-
-
-
-
-// module.exports = {
-//     profileHandler: function (client) {
-//         client.on('interactionCreate', async (interaction) => {
-//             if (interaction.isButton() && interaction.customId === 'profile') {
-//                 const userId = interaction.user.id;
-                
-//                 // Use the functions to gather data for the user
-//                 const optimalUpgradesData = await calculateDynamicOptimalUpgrades(userId, null); // Assuming null for selectedLocation means use active location
-//                 const percentageMaxed = await calculatePercentageMaxed(userId);
-//                 const incomeData = await calculateCurrentAndPotentialIncome(userId);
-//                 const glitchedIncome = await calculateGlitchedIncome(userId);
-                
-//                 const embed = new EmbedBuilder()
-//                     .setColor('#0099ff')
-//                     .setTitle(`${interaction.user.username}'s Profile`)
-//                     .setDescription(`Your profile details and upgrade recommendations.`)
-//                     .addFields(
-//                         { name: 'Percentage Maxed', value: `${percentageMaxed}%`, inline: true },
-//                         { name: 'Current Income', value: `$${incomeData.currentIncome}`, inline: true },
-//                         { name: 'Potential Income', value: `$${incomeData.potentialIncome}`, inline: true },
-//                         { name: 'Glitched Income', value: `$${glitchedIncome}`, inline: true },
-//                         { name: 'Total Cost for Recommended Upgrades', value: `$${optimalUpgradesData.totalCost}`, inline: false }
-//                     )
-//                     // You can add more fields based on the data you have
-                    
-//                 await interaction.reply({ embeds: [embed] });
-//             }
-//         });
-//     }
-// };
+// Path: Cryptology2/utils/TacoShack/Profile.js
