@@ -35,6 +35,7 @@ function parseEmbedDescription(description) {
     // Splits the description into sections for each upgrade
     const sections = description.split('\n\n').filter(section => section.trim() !== '');
 
+    // forEach is a function that iterates over each element in an array
     sections.forEach(section => {
         // Variables to hold current section's progress and ID
         let currentProgress = null;
@@ -185,10 +186,13 @@ async function updateHQInfoFromEmbed(userId, embedFields) {
                 for (const bonus of bonuses) {
                     if (bonus.includes('Income:')) {
                         parsedData.income = parseInt(bonus.replace(/,+/g, '').match(/\+\$(\d+)/)[1], 10);
+                        console.log(parsedData.income);
                     } else if (bonus.includes('Tip:')) {
                         parsedData.tip = parseFloat(bonus.match(/\+(\d+)%/)[1]) / 100;
+                        console.log(parsedData.tip);
                     } else if (bonus.includes('Work:')) {
                         parsedData.work = parseFloat(bonus.match(/\+(\d+)%/)[1]) / 100;
+                        console.log(parsedData.work);
                     } else if (bonus.includes('Overtime:')) {
                         parsedData.overtime = parseFloat(bonus.match(/(\d+)x Money/)[1]);
                     } else if (bonus.includes('Lunch Rush:')) {
@@ -203,10 +207,12 @@ async function updateHQInfoFromEmbed(userId, embedFields) {
                 break;
         }
     }
-
-    // Update the database with parsedData
+    if (Object.keys(parsedData).length > 0) {
     await db.set(`shackData.${userId}.hq.info`, parsedData);
     console.log(`HQ information updated for user ${userId}`);
+    } else {
+        console.log(`Attempted to save empty userData for ${user.id}, operation skipped.`);
+    }
 }
 
 
@@ -246,6 +252,8 @@ module.exports = {
                     const updatedEmbed = newMessage.embeds[0];
                     const validTitles = ["Upgrades", "Employees", "Decorations", "Advertisements", "Taco Truck Upgrades", "Mall Kiosk Upgrades", "Ice Cream Stand Upgrades", "Amusement Park Attractions", "Hotdog Cart Upgrades"];
                     const firstField = updatedEmbed.fields[0];
+
+    
                     if (validTitles.some(title => updatedEmbed.title && updatedEmbed.title.includes(title))) {
                         // console.log("Embed title does not match the required criteria.");
                         // return; // Exit if none of the keywords are found in the title
@@ -329,6 +337,7 @@ module.exports = {
                         console.log(`No matching user found for username: ${username}`);
                     }
                 }                
+
                 }
             }
         });

@@ -180,7 +180,7 @@ async function calculateFinancialProgress(userId) {
         percentageMaxed: percentageMaxed.toFixed(2), 
         totalSpent: totalSpent.toLocaleString(), 
         totalToMax: totalToMax.toLocaleString(), 
-        totalLeft: (totalToMax - totalSpent).toLocaleString()
+        totalLeft: (totalToMax - totalSpent)
     };
 }
 function getFranchiseStatusIncomeBonus(franchiseStatus) {
@@ -280,6 +280,35 @@ async function calculateIncomeDetails(userId) {
     };
 }
 
+async function estimateTimeToMax(userId) {
+    const userData = await db.get(`shackData.${userId}`);
+    if (!userData) {
+        console.error(`No data found for user ${userId}`);
+        return null;
+    }
+    const activeLocation = userData.info.activeLocation;
+    const locationData = userData.location[activeLocation];
+    const upgradeDefinitions = require('./shackData.json').locations[activeLocation];
+
+    let Workbase = (6000+7300)/2;
+    let Tipsbase = (250+2500)/2;
+    const increase = 1200;
+    const tipslevel = locationData.upgrades.tipjar;
+    const applianceslevel = locationData.upgrades.appliances;
+    const hqtips = userData.hq.info.tip;
+    const hqappliances = userData.hq.info.work;
+    const tips = (Tipsbase + (increase * (tipslevel+1))) + ((Tipsbase + (increase * (tipslevel+1)))*hqtips);
+    const appliances = (Workbase + (increase * (applianceslevel+1))) + ((Workbase + (increase * (applianceslevel+1)))*hqappliances);
+    let total = tips + appliances;
+
+
+    return {
+        tips,
+        appliances,
+        total
+    }
+}
+
 async function calculateCurrentAndPotentialIncome(userId) {
     const userData = await db.get(`shackData.${userId}`);
     if (!userData) {
@@ -340,6 +369,9 @@ module.exports = {
                 const financialProgress = await calculateFinancialProgress(userId);
                 const percentageMaxed = await calculatePercentageMaxed(userId);
                 const incomeDetails = await calculateIncomeDetails(userId);
+                const timeToMax = await estimateTimeToMax(userId);
+
+                const timeMax = financialProgress.totalLeft / timeToMax.total;
                 // const glitchedIncome = await calculateGlitchedIncome(userId);
                 const beautifiedLocation = beautifyLocation(userData.info.activeLocation);
                 const embed = new EmbedBuilder()
@@ -350,13 +382,13 @@ module.exports = {
                 .setFooter({ text: `${interaction.user.username} | ${beautifiedLocation}` })
                 .addFields(
                     // Group related financial progress details together
-                    { name: 'Financial Progress', value: `**Percentage Maxed**: ${financialProgress.percentageMaxed}%\n**Total Spent**: $${financialProgress.totalSpent.toLocaleString()}\n**Total to Max**: $${financialProgress.totalToMax.toLocaleString()}\n**Total Left to Max**: $${financialProgress.totalLeft.toLocaleString()}`, inline: false },
+                    { name: 'Financial Progress', value: `**Percentage Maxed**: ${financialProgress.percentageMaxed}%\n**Total Spent**: $${financialProgress.totalSpent.toLocaleString()}\n**Total to Max**: $${financialProgress.totalToMax.toLocaleString()}\n**Total Left to Max**: $${financialProgress.totalLeft.toLocaleString()}\nShifts/Tips to Max: ${timeMax.toFixed(0)}`, inline: false },
             
                     // Group income details together
                     { name: 'Income Analysis', value: `**Current Income**: $${incomeDetails.storedCurrentIncome.toLocaleString()}\n**Income Left**: $${incomeDetails.potentialCurrentIncome.toLocaleString()}\n**Current Income (Max HQ)**: $${incomeDetails.currentMaxHQincome.toLocaleString()}\n**Actual Income**: $${incomeDetails.actualIncome.toLocaleString()}\n**Maxed Income**: $${incomeDetails.maxedIncome.toLocaleString()}`, inline: false },
             
                     // Glitched Income details
-                    { name: 'Glitched Income Analysis', value: `**Glitched Income**: $${incomeDetails.glitchedIncome.toLocaleString()}\n**Maxed Income (With Glitch)**: $${incomeDetails.currentMaxedIncome.toLocaleString()}\n**Fully Maxed Income**: $${incomeDetails.fullyMaxedIncome.toLocaleString()}`, inline: false }
+                    { name: 'Glitched Income Analysis', value: `**Glitched Income**: $${incomeDetails.glitchedIncome.toLocaleString()}\n**Maxed Income (With Glitch)**: $${incomeDetails.currentMaxedIncome.toLocaleString()}\n**Fully Maxed Income**: $${incomeDetails.fullyMaxedIncome.toLocaleString()}\nShift Income: ${timeToMax.appliances.toLocaleString()}\nTips Income: ${timeToMax.tips.toLocaleString()}`, inline: false }
                 )
                 await interaction.reply({ embeds: [embed] });
             }
