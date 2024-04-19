@@ -252,7 +252,6 @@ module.exports = {
                     const updatedEmbed = newMessage.embeds[0];
                     const validTitles = ["Upgrades", "Employees", "Decorations", "Advertisements", "Taco Truck Upgrades", "Mall Kiosk Upgrades", "Ice Cream Stand Upgrades", "Amusement Park Attractions", "Hotdog Cart Upgrades"];
                     const firstField = updatedEmbed.fields[0];
-
     
                     if (validTitles.some(title => updatedEmbed.title && updatedEmbed.title.includes(title))) {
                         // console.log("Embed title does not match the required criteria.");

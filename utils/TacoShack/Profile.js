@@ -266,8 +266,9 @@ async function calculateIncomeDetails(userId) {
     const currentMaxedIncome = maxedIncome + glitchedIncome; // Maxed income adjusted for glitches
     const potentialCurrentIncome = currentMaxedIncome - storedCurrentIncome
     const hqmaxdifference = maxHqIncome - hqIncome;
-    const currentMaxHQincome = currentMaxedIncome + hqmaxdifference; // Current income with maximum HQ benefit
-
+    const leveldifference = maxLevelIncome - levelIncome;
+    const currentMaxHQincome = storedCurrentIncome + hqmaxdifference; // Current income with maximum HQ benefit
+    const ultrafullincome = currentMaxedIncome + hqmaxdifference + leveldifference;
     return {
         actualIncome,
         glitchedIncome,
@@ -276,7 +277,8 @@ async function calculateIncomeDetails(userId) {
         fullyMaxedIncome,
         potentialCurrentIncome,
         storedCurrentIncome,
-        currentMaxHQincome
+        currentMaxHQincome,
+        ultrafullincome
     };
 }
 
@@ -388,7 +390,7 @@ module.exports = {
                     { name: 'Income Analysis', value: `**Current Income**: $${incomeDetails.storedCurrentIncome.toLocaleString()}\n**Income Left**: $${incomeDetails.potentialCurrentIncome.toLocaleString()}\n**Current Income (Max HQ)**: $${incomeDetails.currentMaxHQincome.toLocaleString()}\n**Actual Income**: $${incomeDetails.actualIncome.toLocaleString()}\n**Maxed Income**: $${incomeDetails.maxedIncome.toLocaleString()}`, inline: false },
             
                     // Glitched Income details
-                    { name: 'Glitched Income Analysis', value: `**Glitched Income**: $${incomeDetails.glitchedIncome.toLocaleString()}\n**Maxed Income (With Glitch)**: $${incomeDetails.currentMaxedIncome.toLocaleString()}\n**Fully Maxed Income**: $${incomeDetails.fullyMaxedIncome.toLocaleString()}\nShift Income: ${timeToMax.appliances.toLocaleString()}\nTips Income: ${timeToMax.tips.toLocaleString()}`, inline: false }
+                    { name: 'Glitched Income Analysis', value: `**Glitched Income**: $${incomeDetails.glitchedIncome.toLocaleString()}\n**Maxed Income (With Glitch)**: $${incomeDetails.currentMaxedIncome.toLocaleString()}\n**Fully Maxed Income (Clean)**: $${incomeDetails.fullyMaxedIncome.toLocaleString()}\n**Fully Maxed Income (Current): ${incomeDetails.ultrafullincome.toLocaleString()} **\nShift Income: ${timeToMax.appliances.toLocaleString()}\nTips Income: ${timeToMax.tips.toLocaleString()}`, inline: false }
                 )
                 await interaction.reply({ embeds: [embed] });
             }

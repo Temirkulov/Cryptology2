@@ -57,7 +57,22 @@ function categorizeLocationAndExpansion(locationString) {
 
     return { categorizedLocation, expansion };
 }
+const donatorRanks = [
+    "Gordon Ramsey",
+    "Executive Chef",
+    "Head Chef",
+    "Sous Chef",
+    "Apprentice Chef"
+];
 
+function extractDonatorRank(footerText) {
+    for (let rank of donatorRanks) {
+        if (footerText.includes(rank)) {
+            return rank; // Return the matched rank
+        }
+    }
+    return null; // Return null if no rank is matched
+}
 
 
 module.exports = {
@@ -74,8 +89,14 @@ module.exports = {
                 await delay(2000);
                 // console.log("Reacting to TacoShack bot message...")
                 if (message.embeds.length > 0) {
+                    
                     const validTitles = ["Upgrades", "Employees", "Decorations", "Advertisements"];
                     const TitleEmbed = message.embeds[0];
+                    let donatorRank = null;
+                    if (TitleEmbed.footer && TitleEmbed.footer.text) {
+                        donatorRank = extractDonatorRank(TitleEmbed.footer.text);
+                    }
+            
                     const firstField = message.embeds[0].fields[0];
                     if (firstField && (firstField.name.includes("Shack Name") || firstField.value.includes("Shack Name"))) {
                         if(TitleEmbed.author) {
@@ -95,6 +116,8 @@ module.exports = {
                         const embed = message.embeds[0];
                         const fields = embed.fields;
                         let extractedShackName = "";
+                        // Test the function with a known footer string
+
                         if (embed.fields.length > 0 && embed.fields[0].name === "Shack Name") {
                             const parts = embed.fields[0].value.split(' '); // Split the value by spaces
                             for (let part of parts) {
@@ -122,6 +145,16 @@ module.exports = {
                             return;
                         } 
 
+                        let userData = await db.get(`shackData.${user.id}`) || {};
+        
+                        // Update the userData with the extracted donator rank
+                        userData.info.donatorRank = donatorRank;
+                
+                        // Save the updated data back to the database
+                        await db.set(`shackData.${user.id}`, userData);
+                        
+                        console.log(`Data for ${user.username} updated with Donator Rank: ${donatorRank}`);
+                        
                         
                         let shackData = await db.get(`shackData.${matchedUserId}`) || {};
                         console.log(`Shack Data for ${matchedUserId}:`, shackData);
@@ -232,7 +265,7 @@ module.exports = {
                         // After processing all fields, save userData under a single key
                         if (Object.keys(shackData).length > 0) {
                             await db.set(`shackData.${user.id}`, shackData);
-                            message.channel.send(`data saved!`)
+                            // message.channel.send(`data saved!`)
                         const dataSavedEmbed = new EmbedBuilder()
                         .setColor(0x0099FF)
                         .setTitle('Data Saved!')

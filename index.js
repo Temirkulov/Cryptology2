@@ -76,9 +76,6 @@ for (const file of eventFiles) {
 }
 
 
-// When the client is ready, run this code (only once).
-// The distinction between `client: Client<boolean>` and `readyClient: Client<true>` is important for TypeScript developers.
-// It makes some properties non-nullable.
 client.once(Events.ClientReady, readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
     handleProfileDataCollection(client);
@@ -106,55 +103,4 @@ client.on(Events.InteractionCreate, async interaction => {
 		}
 	}
 });
-// client.on('messageUpdate', (oldMessage, newMessage) => {
-//     // Ensure the updated message is from a bot but not your own bot
-//         // Check if the new message has embeds
-//         if (newMessage.author.bot && newMessage.author.id !== client.user.id) {
-//         if (newMessage.embeds.length > 0) {
-//             newMessage.embeds.forEach((embed, index) => {
-//                 console.log(`Embed ${index + 1} updated by ${newMessage.author.username}:`);
-//                 // Check if this embed has fields
-//                 if (embed.fields && embed.fields.length > 0) {
-//                     embed.fields.forEach((field, fieldIndex) => {
-//                         console.log(`Field ${fieldIndex + 1}: Name: ${field.name}, Value: ${field.value}`);
-//                     });
-//                 } else {
-//                     console.log("This embed has no fields.");
-//                 }
-//             });
-//         }
-//     }
-// });
-// client.on('messageCreate', async message => {
-//     if (message.author.bot && message.author.id === '490707751832649738') {
-//         console.log("Reacting to the bot message...");
-
-//         try {
-//             await message.react('📋');
-//         } catch (error) {
-//             console.error("Failed to react:", error);
-//             return; // Stop further execution if reacting fails
-//         }
-
-//         const filter = (reaction, user) => {
-//             console.log(`Reaction received: ${reaction.emoji.name}, by user: ${user.tag}`);
-//             return reaction.emoji.name === '📋' && !user.bot;
-//         };
-
-//         console.log("Setting up reaction collector...");
-
-//         message.awaitReactions({ filter, max: 1, time: 30000 })
-//             .then(collected => {
-//                 const reaction = collected.first();
-//                 if (reaction) {
-//                     const user = reaction.users.cache.filter(u => !u.bot).first();
-//                     console.log(`Successfully collected ${reaction.emoji.name} from ${user.tag}`);
-//                     // Proceed with further logic here
-//                 }
-//             })
-//             .catch(error => console.error("Failed to collect reactions:", error));
-//     }
-// });
-
-// Log in to Discord with your client's token
 client.login(token);
