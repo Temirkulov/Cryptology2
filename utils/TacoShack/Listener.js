@@ -233,6 +233,8 @@ module.exports = {
                         if (embed.title ) {
                             // message.reply({ content: embed.title });
                             console.log("Embed title:", embed.title);
+                            console.log('Embed description:', embed.description);
+
                         } else {
                             // The embed does not have an author name
                             console.log({ content: "No author name" });

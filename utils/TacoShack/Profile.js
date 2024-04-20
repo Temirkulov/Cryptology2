@@ -132,23 +132,22 @@ async function calculatePercentageMaxed(userId) {
     const percentageMaxed = totalUpgrades > 0 ? (maxedUpgrades / totalUpgrades) * 100 : 0;
     return percentageMaxed;
 }
-async function calculateFinancialProgress(userId) {
+async function calculateFinancialProgress(userId, locationKey) {
     const userData = await db.get(`shackData.${userId}`);
     if (!userData) {
         console.error(`No data found for user ${userId}`);
         return { percentageMaxed: 0, totalSpent: 0, totalToMax: 0, totalLeft: 0 };
     }
 
-    const activeLocation = userData.info.activeLocation;
-    const locationData = userData.location[activeLocation];
-    const upgradeDefinitions = require('./shackData.json').locations[activeLocation];
+    const locationData = userData.location[locationKey];
+    const upgradeDefinitions = require('./shackData.json').locations[locationKey];
 
     let totalSpent = 0;
     let totalToMax = 0;
     const types = ['upgrades', 'hire', 'decorations', 'advertisements'];
 
     if (locationData.info.expansion) {
-        types.push(expansionMapping[activeLocation]); // Ensure this is defined to match your data
+        types.push(expansionMapping[locationKey]); // Use dynamic mapping based on location
     }
 
     types.forEach(type => {
@@ -159,15 +158,10 @@ async function calculateFinancialProgress(userId) {
             const upgradeDef = upgradeDefinitions[type]?.[upgradeName];
             if (!upgradeDef) return;
 
-            // Cap the current level at the maximum if it exceeds due to a glitch
-            const effectiveCurrentLevel = Math.min(currentLevel, upgradeDef.max);
-
-            // Calculate the cost to reach the effective current level for each upgrade
-            for (let level = 1; level <= effectiveCurrentLevel; level++) {
+            for (let level = 1; level <= currentLevel; level++) {
                 totalSpent += calculateNextLevelCost(level, upgradeDef.initialPrice);
             }
 
-            // Calculate the total cost to max for each upgrade
             for (let level = 1; level <= upgradeDef.max; level++) {
                 totalToMax += calculateNextLevelCost(level, upgradeDef.initialPrice);
             }
@@ -175,12 +169,11 @@ async function calculateFinancialProgress(userId) {
     });
 
     const percentageMaxed = totalToMax > 0 ? (totalSpent / totalToMax) * 100 : 0;
-
     return { 
         percentageMaxed: percentageMaxed.toFixed(2), 
         totalSpent: totalSpent.toLocaleString(), 
         totalToMax: totalToMax.toLocaleString(), 
-        totalLeft: (totalToMax - totalSpent)
+        totalLeft: (totalToMax - totalSpent).toLocaleString()
     };
 }
 function getFranchiseStatusIncomeBonus(franchiseStatus) {
@@ -220,7 +213,7 @@ async function calculateIncomeDetails(userId) {
     const activeLocation = userData.info.activeLocation;
     const locationData = userData.location[activeLocation];
     const upgradeDefinitions = require('./shackData.json').locations[activeLocation];
-    
+    const franchisename = userData.info.franchise;
     // Utility incomes
     const franchiseIncomeBonus = getFranchiseStatusIncomeBonus(userData.info.franchiseStatus);
     const levelIncomeBonus = getLevelIncomeBonus(userData.info.level);
@@ -278,7 +271,9 @@ async function calculateIncomeDetails(userId) {
         potentialCurrentIncome,
         storedCurrentIncome,
         currentMaxHQincome,
-        ultrafullincome
+        ultrafullincome,
+        levelIncome,
+        franchisename
     };
 }
 
@@ -311,42 +306,6 @@ async function estimateTimeToMax(userId) {
     }
 }
 
-async function calculateCurrentAndPotentialIncome(userId) {
-    const userData = await db.get(`shackData.${userId}`);
-    if (!userData) {
-        console.error(`No data found for user ${userId}`);
-        return { currentIncome: 0, potentialIncome: 0 };
-    }
-
-    const activeLocation = userData.info.activeLocation;
-    const locationData = userData.location[activeLocation];
-    const upgradeDefinitions = require('./shackData.json').locations[activeLocation];
-
-    let currentIncome = locationData.info.income || 0; // Assuming base income is stored at this path
-    let potentialIncome = currentIncome;
-
-    const types = ['upgrades', 'hire', 'decorations', 'advertisements'];
-    const franchiseIncomeBonus = 9900; // Define as per actual value
-    const hqIncome = userData.hq.info.income || 0; // Assuming hq income is stored at this path
-    const menuBonus = 2600; // Define as per actual value
-
-
-    types.forEach(type => {
-        Object.entries(locationData[type]).forEach(([upgradeName, level]) => {
-            const upgradeDef = upgradeDefinitions[type]?.[upgradeName];
-            if (upgradeDef) {
-                currentIncome += level * upgradeDef.boost;
-                potentialIncome += upgradeDef.max * upgradeDef.boost;
-            }
-        });
-    });
-
-    // Add constant incomes to both current and potential income
-    currentIncome += franchiseIncomeBonus + hqIncome + menuBonus;
-    potentialIncome += franchiseIncomeBonus + hqIncome + menuBonus; // Assuming these bonuses also apply to potential income
-
-    return { currentIncome, potentialIncome };
-}
 function beautifyLocation(activeLocationKey) {
     const locationMap = {
         city: "🏙 City Shack",
@@ -359,42 +318,128 @@ function beautifyLocation(activeLocationKey) {
     // Return the beautified version if found, else default to the key itself
     return locationMap[activeLocationKey] || activeLocationKey;
 }
+function beautifyAllLocations(locations) {
+    const locationMap = {
+        city: "🏙 City Shack",
+        amusement: "🎢 Amusement Park Shack",
+        taco: "🌮 Taco Shack",
+        mall: "🏬 Mall Shack",
+        beach: "⛱ Beach Shack"
+    };
+
+    if (!locations || Object.keys(locations).length === 0) {
+        return 'No location data available'; // Return a default message if no locations
+    }
+
+    let result = '';
+    Object.keys(locations).forEach(key => {
+        // Checking if each location has meaningful 'info' object and possibly other necessary checks
+        if (locations[key].info && Object.keys(locations[key].info).length > 0) {
+            const percentageMaxed = locations[key].info.expansionLevel ? `${locations[key].info.expansionLevel * 10}%` : 'Not Available'; // Example percentage calculation
+            result += `**${locationMap[key] || key}**: ${percentageMaxed} maxed\n`;
+        }
+    });
+
+    return result || 'No detailed location data available';
+}
 
 module.exports = {
     profileHandler: function (client) {
         client.on('interactionCreate', async (interaction) => {
-            if (interaction.isButton() && interaction.customId === 'profile') {
-                const userId = interaction.user.id;
-                const userData = await db.get(`shackData.${userId}`) || {};
-                // Use the functions to gather data for the user
-                const optimalUpgradesData = await calculateDynamicOptimalUpgrades(userId, null); // Using null for selectedLocation as a default
-                const financialProgress = await calculateFinancialProgress(userId);
-                const percentageMaxed = await calculatePercentageMaxed(userId);
-                const incomeDetails = await calculateIncomeDetails(userId);
-                const timeToMax = await estimateTimeToMax(userId);
+            if (!interaction.isButton() || interaction.customId !== 'profile') return;
 
-                const timeMax = financialProgress.totalLeft / timeToMax.total;
-                // const glitchedIncome = await calculateGlitchedIncome(userId);
-                const beautifiedLocation = beautifyLocation(userData.info.activeLocation);
-                const embed = new EmbedBuilder()
-                .setColor('#FFB6C1')
-                .setTitle(`${interaction.user.username}'s Profile`)
-                .setDescription(`**Profile Income Analysis**`)
-                .setThumbnail(interaction.user.displayAvatarURL())
-                .setFooter({ text: `${interaction.user.username} | ${beautifiedLocation}` })
-                .addFields(
-                    // Group related financial progress details together
-                    { name: 'Financial Progress', value: `**Percentage Maxed**: ${financialProgress.percentageMaxed}%\n**Total Spent**: $${financialProgress.totalSpent.toLocaleString()}\n**Total to Max**: $${financialProgress.totalToMax.toLocaleString()}\n**Total Left to Max**: $${financialProgress.totalLeft.toLocaleString()}\nShifts/Tips to Max: ${timeMax.toFixed(0)}`, inline: false },
+            const userId = interaction.user.id;
+            const userData = await db.get(`shackData.${userId}`) || {};
+            const optimalUpgradesData = await calculateDynamicOptimalUpgrades(userId, null); // Using null for selectedLocation as a default
+            const percentageMaxed = await calculatePercentageMaxed(userId);
+            // const incomeDetails = await calculateIncomeDetails(userId);
+            const timeToMax = await estimateTimeToMax(userId);
+            const locationData = userData.location || {}; // Default to an empty object if userData.location is undefined
+
+            const beautifiedLocations = beautifyAllLocations(locationData);
             
-                    // Group income details together
-                    { name: 'Income Analysis', value: `**Current Income**: $${incomeDetails.storedCurrentIncome.toLocaleString()}\n**Income Left**: $${incomeDetails.potentialCurrentIncome.toLocaleString()}\n**Current Income (Max HQ)**: $${incomeDetails.currentMaxHQincome.toLocaleString()}\n**Actual Income**: $${incomeDetails.actualIncome.toLocaleString()}\n**Maxed Income**: $${incomeDetails.maxedIncome.toLocaleString()}`, inline: false },
-            
-                    // Glitched Income details
-                    { name: 'Glitched Income Analysis', value: `**Glitched Income**: $${incomeDetails.glitchedIncome.toLocaleString()}\n**Maxed Income (With Glitch)**: $${incomeDetails.currentMaxedIncome.toLocaleString()}\n**Fully Maxed Income (Clean)**: $${incomeDetails.fullyMaxedIncome.toLocaleString()}\n**Fully Maxed Income (Current): ${incomeDetails.ultrafullincome.toLocaleString()} **\nShift Income: ${timeToMax.appliances.toLocaleString()}\nTips Income: ${timeToMax.tips.toLocaleString()}`, inline: false }
-                )
-                await interaction.reply({ embeds: [embed] });
+    // Example calculations (ensure these functions exist and are imported)
+    const allLocationsFormatted = beautifyAllLocations(userData.locations); // Assuming beautifyAllLocations summarizes all locations
+    const beautifiedLocationData = beautifyAllLocations(userData.location);
+    // const financialProgress = await calculateFinancialProgress(userId, locationKey);
+    let otherLocationsReport = '';
+
+    // Process each location for a detailed report
+    if (userData.location && Object.keys(userData.location).length > 0) {
+        for (let locationKey in userData.location) {
+            if (locationKey !== userData.info.activeLocation) {  // Skip the active location for this loop
+                // dont add location if percentage maxed is 0
+                if (userData.location[locationKey].info.income > 0) {
+                const financialProgress = await calculateFinancialProgress(userId, locationKey);
+                otherLocationsReport += `**${beautifyLocation(locationKey)}**\n` +
+                                        `Percentage Maxed: ${financialProgress.percentageMaxed}%\n`
+                                        // `Total Spent: $${financialProgress.totalSpent}\n` +
+                                        // `Total to Max: $${financialProgress.totalToMax}\n` +
+                                        // `Total Left to Max: $${financialProgress.totalLeft}\n\n`;
+            } else {
+                otherLocationsReport += `**${beautifyLocation(locationKey)}**\n` +
+                                        `No income data available\n\n`;
             }
-        });
+        }
+        }
+    } else {
+        otherLocationsReport = "No other location data available";
+    }
+
+    // Specific data for the active location
+    const financialProgressActive = await calculateFinancialProgress(userId, userData.info.activeLocation);
+    const incomeDetails = await calculateIncomeDetails(userId);
+
+    const embed = new EmbedBuilder()
+        .setColor('#FFB6C1')
+        .setTitle(`${userData.info.username || 'User'}'s Comprehensive Profile Report`)
+        .setDescription("Detailed financial and operational report for all locations.")
+        .setThumbnail(interaction.user.displayAvatarURL())
+        .addFields([
+            {
+                name: '🔎 Current Location Analysis',
+                value: `**Location**: ${beautifyLocation(userData.info.activeLocation)}\n` +
+                       `**Percentage Maxed**: ${financialProgressActive.percentageMaxed}%\n` +
+                       `**Total Spent**: $${financialProgressActive.totalSpent}\n` +
+                       `**Total to Max**: $${financialProgressActive.totalToMax}\n` +
+                       `**Total Left to Max**: $${financialProgressActive.totalLeft}\n` +
+                       `**Current Income**: $${incomeDetails.storedCurrentIncome}\n` +
+                       `**Actual Income**: $${incomeDetails.actualIncome}\n` +
+                       `**Glitched Income**: $${incomeDetails.glitchedIncome}\n` +
+                       `**Maxed Income**: $${incomeDetails.currentMaxedIncome}\n` +
+                       `**Achieved Max Income**: ${incomeDetails.achievedMaxIncome ? 'Yes' : 'No'}`,
+                inline: false
+            },
+            // {
+            //     name: '📝 Other Locations',
+            //     value: `**Locations Unlocked**: ${actualFunction.result}\n` +
+            //     `**Locations Maxed**: ${actualFunction.locationsandnames}%\n` +
+            //     `**Total Spent**: $${actualFunction}\n` +
+            //     `**Total to Max**: $${financialProgressActive.totalToMax}\n` +
+            //     `**Total Income**: $${actualFunction.totalIncome}\n` +
+            //     `**Total Percentage Maxed**: $${actualFunction.totalPercentageMaxed}\n`,
+            //     inline: false
+            // },
+            {
+                name: '📒 Miscellaneous Data',
+                value: `**Shift Income**: $${incomeDetails.shiftIncome}\n` +
+                       `**Tips Income**: $${incomeDetails.tipsIncome}\n` +
+                       `**Level Income**: $${incomeDetails.levelIncome}\n` +
+                       `**Franchise Income**: $${incomeDetails.franchiseIncome}\n` +
+                       `**Donator Status**: ${userData.info.donatorRank || 'None'}\n` +
+                       `**HQ Income**: ${userData.weeklyShifts}\n` +
+                       `**Franchise Name**: ${userData.info.franchise}\n`,
+
+                    //    `**Patreon Server**: ${actualFunction.checkIfGuildPatreon? 'yes' : 'no'}\n`,
+                inline: false
+            }
+        ])
+        .setFooter({ text: `${interaction.user.username} | ${beautifyLocation(userData.info.activeLocation || 'default')}` });
+
+    await interaction.reply({ embeds: [embed] });
+
+}
+        );
     }
 };
 

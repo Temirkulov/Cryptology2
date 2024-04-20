@@ -71,7 +71,7 @@ function extractDonatorRank(footerText) {
             return rank; // Return the matched rank
         }
     }
-    return null; // Return null if no rank is matched
+    return rank = "None"; // Return null if no rank is matched
 }
 
 

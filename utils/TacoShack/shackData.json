@@ -185,8 +185,8 @@
         "radio": { "max0": 8, "max1": 15, "max2": 25, "max3": 35, "max": 40,"initialPrice": 650, "boost": 20 },
         "email": { "max0": 6, "max1": 15, "max2": 25, "max3": 35, "max": 40,"initialPrice": 1000, "boost": 30 },
         "internet": { "max0": 5, "max1": 10, "max2": 30, "max3": 35, "max": 45,"initialPrice": 2000, "boost": 50 },
-        "tv": { "max0": 2, "max1": 5, "max2": 10, "max3": 35,"max": 30,"initialPrice": 5500, "boost": 160 },
-        "blimp": { "max0": 1, "max1": 2, "max2": 3, "max3": 35, "max": 5,"initialPrice": 250000, "boost": 200 }
+        "tv": { "max0": 2, "max1": 5, "max2": 10, "max3": 30,"max": 30,"initialPrice": 5500, "boost": 160 },
+        "blimp": { "max0": 1, "max1": 2, "max2": 3, "max3": 5, "max": 5,"initialPrice": 250000, "boost": 200 }
     }, "attractions": {
         "toss": { "max0": 20, "max1": 20, "max2": 20, "max3": 20, "max": 20,"initialPrice": 5000, "boost": 50 },
         "arcade": { "max0": 15, "max1": 15, "max2": 15, "max3": 15, "max": 15,"initialPrice": 8500, "boost": 100 },

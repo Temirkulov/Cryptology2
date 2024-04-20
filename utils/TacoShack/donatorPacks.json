@@ -1,0 +1,38 @@
+{
+    "None": {
+        "workMultiplier": 1,
+        "tipsMultiplier": 1,
+        "workCooldown": 600,  
+        "tipCooldown": 300    
+    },
+    "GordonRamsey": {
+        "workMultiplier": 3,
+        "tipsMultiplier": 3,
+        "workCooldown": 420,
+        "tipCooldown": 180
+    },
+    "ExecutiveChef": {
+        "workMultiplier": 2,
+        "tipsMultiplier": 2,
+        "workCooldown": 480,
+        "tipCooldown": 240
+    },
+    "HeadChef": {
+        "workMultiplier": 2,
+        "tipsMultiplier": 2,
+        "workCooldown": 480,
+        "tipCooldown": 240
+    },
+    "SousChef": {
+        "workMultiplier": 2,
+        "tipsMultiplier": 2,
+        "workCooldown": 480,
+        "tipCooldown": 300
+    },
+    "ApprenticeChef": {
+        "workMultiplier": 1,
+        "tipsMultiplier": 1,
+        "workCooldown": 600,
+        "tipCooldown": 300
+    }
+}
