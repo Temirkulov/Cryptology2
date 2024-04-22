@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { QuickDB } = require("quick.db");
 const db = new QuickDB();
 const { defaultShackData } = require('../../utils/TacoShack/shackDataStructure');
@@ -6,47 +6,82 @@ const { defaultShackData } = require('../../utils/TacoShack/shackDataStructure')
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('setup')
-        .setDescription('Setup your account for use in data collection')
-        .addStringOption(option =>
-            option.setName('confirm')
-                .setDescription('Confirm setup with yes')
-                .setRequired(true)),
+        .setDescription('Setup your profile for Cryptology 2.'),
+
     async execute(interaction) {
-        // Assuming 'yes' is the expected confirmation value
-        const confirmation = interaction.options.getString('confirm');
-        if (confirmation.toLowerCase() !== 'yes') {
-            await interaction.reply({ content: 'Setup not confirmed. Please confirm with yes.', ephemeral: true });
-            return;
-        }
+        // Initial interaction asking for timer reminder setup
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('enable_reminders')
+                    .setLabel('Yes')
+                    .setStyle(ButtonStyle.Success),  // Correct usage of ButtonStyle enum
+                new ButtonBuilder()
+                    .setCustomId('disable_reminders')
+                    .setLabel('No')
+                    .setStyle(ButtonStyle.Danger)   // Correct usage of ButtonStyle enum
+            );
 
-        const userId = interaction.user.id;
-        const userName = interaction.user.username;
+        await interaction.reply({ 
+            content: 'Do you wish to receive timer reminders?', 
+            components: [row], 
+            ephemeral: true 
+        });
 
-        // Example of setting up the user data structure
-        let userData = await db.get(`shackData.${userId}`);
+        // Set up a collector to handle the button interaction
+        const collector = interaction.channel.createMessageComponentCollector({
+            time: 15000 // 15 seconds to respond
+        });
 
-        // If userData doesn't exist, initialize it using your default data structure
-        if (!userData) {
-            // Assuming you have a default data structure for new users
-            // This could be defined elsewhere in your code
-            userData = JSON.parse(JSON.stringify(defaultShackData)); // Assuming defaultShackData is your default structure
-        }
-        userData.info.userid = userId;
-        userData.info.username = userName;
-        // Saving the structure to the database under the user's ID
-        await db.set(`shackData.${userId}`, userData);
+        collector.on('collect', async i => {
+            if (i.user.id === interaction.user.id) {
+                await i.deferUpdate();
+                const remindersEnabled = i.customId === 'enable_reminders';
+                
+                // Ask for confirmation to complete the setup
+                const confirmRow = new ActionRowBuilder()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setCustomId('confirm_setup')
+                            .setLabel('Confirm Setup')
+                            .setStyle(ButtonStyle.Primary)  // Correct usage of ButtonStyle enum
+                    );
 
-        // Example of embedding the user's ID and username in the confirmation message
-        const embed = new EmbedBuilder()
-            .setColor(0x0099FF)
-            .setTitle('Account Setup Confirmation')
-            .setDescription('Your account has been set up successfully for data collection.')
-            .addFields(
-                { name: 'User ID', value: userId, inline: true },
-                { name: 'Username', value: userName, inline: true },
-            )
-            .setTimestamp();
+                await i.editReply({
+                    content: `You have chosen to ${remindersEnabled ? 'enable' : 'disable'} timer reminders. Click 'Confirm Setup' to finalize.`,
+                    components: [confirmRow]
+                });
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
-    },
+                collector.stop();
+
+                // Handle final confirmation
+                const filter = m => m.customId === 'confirm_setup' && m.user.id === interaction.user.id;
+                interaction.channel.awaitMessageComponent({ filter, time: 15000 })
+                    .then(async conf => {
+                        if (conf.customId === 'confirm_setup') {
+                            let userData = await db.get(`shackData.${interaction.user.id}`) || JSON.parse(JSON.stringify(defaultShackData));
+                            userData.info.userid = interaction.user.id;
+                            userData.info.username = interaction.user.username;
+                            userData.info.reminders = remindersEnabled;
+                            userData.info.donatorRank = null; // Ensure this field is managed as needed
+                            // Save the updated data
+                            await db.set(`shackData.${interaction.user.id}`, userData);
+
+                            const embed = new EmbedBuilder()
+                                .setColor(0x0099FF)
+                                .setTitle('Account Setup Confirmation')
+                                .setDescription('Your account has been set up successfully with your selected preferences.')
+                                .addFields(
+                                    { name: 'User ID', value: interaction.user.id, inline: true },
+                                    { name: 'Username', value: interaction.user.username, inline: true },
+                                    { name: 'Timer Reminders', value: remindersEnabled ? 'Enabled' : 'Disabled', inline: true },
+                                )
+                                .setTimestamp();
+
+                            await conf.update({ content: 'Setup complete!', embeds: [embed], components: [] });
+                        }
+                    }).catch(console.error);
+            }
+        });
+    }
 };

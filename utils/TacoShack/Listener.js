@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageActionRow} = require('discord.js');
 const { QuickDB } = require("quick.db");
 const db = new QuickDB();
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -220,33 +220,89 @@ async function updateHQInfoFromEmbed(userId, embedFields) {
 
 module.exports = {
     handleTacoShackMessageCreate: function (client) {
-        client.on('messageCreate', message => {
+        const enable_reminders = require('./timerReaction.js');
+        // Call the exported functions from each module
+        enable_reminders.timerReactionHandler(client);
+
+        client.on('messageCreate', async message => {
             if (message.author.bot && message.author.id === '490707751832649738') {
-                setTimeout(() => {
-                    // console.log("Checking message after delay:", message.content); // Log message content for debugging
+                setTimeout(async () => {
                     if (message.embeds.length > 0) {
                         const embed = message.embeds[0];
-                        // console.log("Found embed:", embed); // Log the entire embed for debugging
-                        embed.fields.forEach((field, index) => {
-                            console.log(`Field ${index + 1}: Name: ${field.name}, Value: ${field.value}`)});            
-        
-                        if (embed.title ) {
-                            // message.reply({ content: embed.title });
-                            console.log("Embed title:", embed.title);
-                            console.log('Embed description:', embed.description);
+                        if (embed.title && embed.title.includes("Cooldowns")) {
+                            await message.react('⏰');
+                            const filter = (reaction, user) => reaction.emoji.name === '⏰' && !user.bot;
+                            const collector = message.createReactionCollector({ filter, time: 20000, maxUsers: 1 });
 
+                            collector.on('collect', async (reaction, user) => {
+                                const userData = await db.get(`shackData.${user.id}`) || {};
+                                const cooldownData = {
+                                    userId: user.id,
+                                    fields: embed.fields.map(field => ({ name: field.name, value: field.value })),
+                                    timestamp: new Date().getTime()
+                                };
+                                console.log(`Cooldown data collected for user ${user.username}:`);
+                                console.log(cooldownData);
+                                // Store the cooldown data linked to the user ID
+                                await db.set(`cooldownEmbed_${user.id}`, cooldownData);
+            
+    
+                                if (!userData.reminders) {
+                                    const enableRow = new ActionRowBuilder()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setCustomId('enable_reminders')
+                                                .setLabel('Enable Reminders')
+                                                .setStyle(ButtonStyle.Success),
+                                            new ButtonBuilder()
+                                                .setCustomId('disable_reminders')
+                                                .setLabel('No Thanks')
+                                                .setStyle(ButtonStyle.Danger)
+                                        );
+
+                                    const askEmbed = new EmbedBuilder()
+                                        .setColor(0x0099FF)
+                                        .setTitle('Enable Timer Reminders?')
+                                        .setDescription('Do you want to enable reminders for TacoShack cooldowns? Your current Donator Rank is ' + (userData.info.donatorRank || 'None'));
+
+                                    await reaction.message.channel.send({ embeds: [askEmbed], components: [enableRow] });
+                                } else {
+                                    console.log(`${user.username} already has reminders enabled.`);
+                                    const enableRow = new ActionRowBuilder()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setCustomId('enable_reminders')
+                                            .setLabel('Enable Reminders')
+                                            .setStyle(ButtonStyle.Success),
+                                        new ButtonBuilder()
+                                            .setCustomId('disable_reminders')
+                                            .setLabel('No Thanks')
+                                            .setStyle(ButtonStyle.Danger)
+                                    );
+
+                                const askEmbed = new EmbedBuilder()
+                                    .setColor(0x0099FF)
+                                    .setTitle('Enable Timer Reminders?')
+                                    .setDescription('Do you want to enable reminders for TacoShack cooldowns? Your current Donator Rank is ' + (userData.info.donatorRank || 'None'));
+
+                                await reaction.message.channel.send({ embeds: [askEmbed], components: [enableRow] });
+
+                                }
+                            });
+
+                            collector.on('end', collected => {
+                                if (collected.size === 0) console.log("No reactions collected.");
+                            });
                         } else {
-                            // The embed does not have an author name
-                            console.log({ content: "No author name" });
+                            console.log("Message does not include 'Cooldowns' in the title.");
                         }
                     } else {
                         console.log("No embeds found in this message.");
                     }
-                }, 3000); // Delay of 3000 milliseconds (3 seconds)
+                }, 1500); // Delay to prevent API spam
             }
         });
     },
-
     handleTacoShackMessageUpdate: function (client) {
         client.on('messageUpdate', async (oldMessage, newMessage) => {
             if (newMessage.author.bot && newMessage.author.id === '490707751832649738') {
@@ -254,7 +310,7 @@ module.exports = {
                     const updatedEmbed = newMessage.embeds[0];
                     const validTitles = ["Upgrades", "Employees", "Decorations", "Advertisements", "Taco Truck Upgrades", "Mall Kiosk Upgrades", "Ice Cream Stand Upgrades", "Amusement Park Attractions", "Hotdog Cart Upgrades"];
                     const firstField = updatedEmbed.fields[0];
-    
+                    console.log(updatedEmbed.fields);
                     if (validTitles.some(title => updatedEmbed.title && updatedEmbed.title.includes(title))) {
                         // console.log("Embed title does not match the required criteria.");
                         // return; // Exit if none of the keywords are found in the title

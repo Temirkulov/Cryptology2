@@ -22,13 +22,13 @@ module.exports = {
         .addIntegerOption(option =>
             option.setName('overtime')
                 .setDescription('Overtime bonus percentage (0-150), e.g., for 150% enter 150')
+                .setRequired(true))
+        .addIntegerOption(option =>
+            option.setName('income')
+                .setDescription('Base income for the franchise (in dollars)')
                 .setRequired(true)),
     
-    /**
-     * @param {CommandInteraction} interaction
-     */
     async execute(interaction) {
-        // Replace "YOUR_USER_ID" with your actual Discord user ID
         const myUserID = "348296915143884801";
         if (interaction.user.id !== myUserID) {
             return interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
@@ -38,6 +38,7 @@ module.exports = {
         const work = interaction.options.getInteger('work') / 100;  // Convert percentage to decimal
         const tips = interaction.options.getInteger('tips') / 100;  // Convert percentage to decimal
         const overtime = interaction.options.getInteger('overtime') / 100;  // Convert percentage to decimal
+        const income = interaction.options.getInteger('income');  // Get the income as a full integer
 
         // Validate input ranges
         if (work < 0 || work > 1 || tips < 0 || tips > 1 || overtime < 0 || overtime > 1.5) {
@@ -45,8 +46,8 @@ module.exports = {
         }
 
         // Save to database
-        await db.set(`franchise_${name}`, { work, tips, overtime });
+        await db.set(`franchise_${name}`, { work, tips, overtime, income });
 
-        return interaction.reply({ content: `Franchise ${name} added with Work: ${work}, Tips: ${tips}, Overtime: ${overtime}`, ephemeral: false });
+        return interaction.reply({ content: `Franchise ${name} added with Work: ${work}, Tips: ${tips}, Overtime: ${overtime}, Income: $${income}`, ephemeral: false });
     }
 };

@@ -262,6 +262,16 @@ async function calculateIncomeDetails(userId) {
     const leveldifference = maxLevelIncome - levelIncome;
     const currentMaxHQincome = storedCurrentIncome + hqmaxdifference; // Current income with maximum HQ benefit
     const ultrafullincome = currentMaxedIncome + hqmaxdifference + leveldifference;
+    let achievedMaxIncomestring = '';
+    if (glitchedIncome < 0) { 
+        const achievedMaxIncome = storedCurrentIncome >= currentMaxedIncome;
+        achievedMaxIncomestring = achievedMaxIncome ? 'Yes' : 'No';
+    } else if (glitchedIncome > 0) {
+        const achievedMaxIncome = storedCurrentIncome >= maxedIncome;
+        achievedMaxIncomestring = achievedMaxIncome ? 'Yes' : 'No';
+    }
+
+
     return {
         actualIncome,
         glitchedIncome,
@@ -273,7 +283,8 @@ async function calculateIncomeDetails(userId) {
         currentMaxHQincome,
         ultrafullincome,
         levelIncome,
-        franchisename
+        franchisename,
+        achievedMaxIncomestring
     };
 }
 
@@ -354,8 +365,10 @@ module.exports = {
             const percentageMaxed = await calculatePercentageMaxed(userId);
             // const incomeDetails = await calculateIncomeDetails(userId);
             const timeToMax = await estimateTimeToMax(userId);
+            const userfranchise = userData.info.franchise;
             const locationData = userData.location || {}; // Default to an empty object if userData.location is undefined
-
+            const franchisedata = await db.get(`franchiseData.${userfranchise}`) || {};
+            
             const beautifiedLocations = beautifyAllLocations(locationData);
             
     // Example calculations (ensure these functions exist and are imported)
@@ -407,7 +420,7 @@ module.exports = {
                        `**Actual Income**: $${incomeDetails.actualIncome}\n` +
                        `**Glitched Income**: $${incomeDetails.glitchedIncome}\n` +
                        `**Maxed Income**: $${incomeDetails.currentMaxedIncome}\n` +
-                       `**Achieved Max Income**: ${incomeDetails.achievedMaxIncome ? 'Yes' : 'No'}`,
+                       `**Achieved Max Income**: ${incomeDetails.achievedMaxIncomestring}\n`,
                 inline: false
             },
             // {
