@@ -2,6 +2,8 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageActio
 const { QuickDB } = require("quick.db");
 const db = new QuickDB();
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+const ms = require('ms'); // npm install ms -- a small utility to parse various time formats to milliseconds
+
 const {
     // setActiveLocation,
     getNewShackDataInstance,
@@ -216,8 +218,50 @@ async function updateHQInfoFromEmbed(userId, embedFields) {
 }
 
 
+async function setReminder(client, userId, field, message) {
+    const userData = await db.get(`shackData.${userId}`);
+    if (!userData || !userData.reminders) {
+        console.log(`No data found for user ${userId}, or reminders are disabled.`);
+        return; // Stop if no user data or reminders disabled
+    }
 
+    // Calculate the delay in milliseconds from the value
+    const delayMilliseconds = parseCooldown(field.value);
 
+    console.log(`Setting a reminder for ${userId} - ${field.name}: Delay set for ${delayMilliseconds}ms`);
+    setTimeout(async () => {
+        try {
+            console.log(`Reminder triggered for ${userId} - ${field.name}`);
+            await message.reply({
+                content: `<@${userId}> Your cooldown for ${field.name} is now ready!`,
+                ephemeral: true // Change this to false if you want the reply to be visible to everyone
+            });
+        } catch (error) {
+            console.error('Error sending reminder:', error);
+        }
+    }, delayMilliseconds);
+}
+
+function parseCooldown(value) {
+    const regex = /(\d+)\s*(seconds|minutes|hours)/;
+    const matches = value.match(regex);
+    if (!matches) return 0;
+
+    let time = parseInt(matches[1], 10);
+    switch (matches[2]) {
+        case 'second':
+        case 'seconds':
+            return time * 1000;
+        case 'minute':
+        case 'minutes':
+            return time * 60000;
+        case 'hour':
+        case 'hours':
+            return time * 3600000;
+        default:
+            return 0;
+    }
+}
 module.exports = {
     handleTacoShackMessageCreate: function (client) {
         const enable_reminders = require('./timerReaction.js');
@@ -229,6 +273,8 @@ module.exports = {
                 setTimeout(async () => {
                     if (message.embeds.length > 0) {
                         const embed = message.embeds[0];
+                        console.log(embed);
+                        console.log("Found embed:", embed);
                         if (embed.title && embed.title.includes("Cooldowns")) {
                             await message.react('⏰');
                             const filter = (reaction, user) => reaction.emoji.name === '⏰' && !user.bot;
@@ -267,25 +313,33 @@ module.exports = {
 
                                     await reaction.message.channel.send({ embeds: [askEmbed], components: [enableRow] });
                                 } else {
-                                    console.log(`${user.username} already has reminders enabled.`);
-                                    const enableRow = new ActionRowBuilder()
-                                    .addComponents(
-                                        new ButtonBuilder()
-                                            .setCustomId('enable_reminders')
-                                            .setLabel('Enable Reminders')
-                                            .setStyle(ButtonStyle.Success),
-                                        new ButtonBuilder()
-                                            .setCustomId('disable_reminders')
-                                            .setLabel('No Thanks')
-                                            .setStyle(ButtonStyle.Danger)
-                                    );
+                                    console.log(`Processing reminders for ${user.id}`);
+                                    embed.fields.forEach(field => {
+                                        if (field.value.startsWith('❌')) {
+                                            setReminder(client, user.id, field, message);
+                                        }
+                                    });
+                                        const reminderRow = new ActionRowBuilder()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setCustomId('disable_reminders')
+                                                .setLabel('Disable Reminders')
+                                                .setStyle(ButtonStyle.Danger),
+                                            new ButtonBuilder()
+                                                .setCustomId('keep_reminders')
+                                                .setLabel('Keep Reminders')
+                                                .setStyle(ButtonStyle.Success)
+                                        );
 
-                                const askEmbed = new EmbedBuilder()
-                                    .setColor(0x0099FF)
-                                    .setTitle('Enable Timer Reminders?')
-                                    .setDescription('Do you want to enable reminders for TacoShack cooldowns? Your current Donator Rank is ' + (userData.info.donatorRank || 'None'));
+                                    const currentSettings = cooldownData.fields.map(field => `${field.name}: ${field.value}`).join('\n');
+                                    const activeReminderEmbed = new EmbedBuilder()
+                                        .setColor(0x0099FF)
+                                        .setTitle('Reminders Currently Active')
+                                        .setDescription(`Your reminders are active for the following cooldowns:\n${currentSettings}`)
+                                        .setFooter({ text: 'You can disable these reminders at any time.' });
 
-                                await reaction.message.channel.send({ embeds: [askEmbed], components: [enableRow] });
+                                    await reaction.message.channel.send({ embeds: [activeReminderEmbed], components: [reminderRow] });
+                
 
                                 }
                             });
@@ -296,6 +350,7 @@ module.exports = {
                         } else {
                             console.log("Message does not include 'Cooldowns' in the title.");
                         }
+                        
                     } else {
                         console.log("No embeds found in this message.");
                     }

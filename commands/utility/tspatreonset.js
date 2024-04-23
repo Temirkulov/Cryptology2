@@ -77,9 +77,13 @@ module.exports = {
                     };
                     break;
             }
+            const settingsString = JSON.stringify(settings);
+            console.log(settingsString);
 
             // Assuming you store these settings in a database keyed to the guild ID
             await db.set(`patreonPerks_${interaction.guild.id}`, settings);
+
+
             await i.editReply({ content: settings.description, components: [] });
         });
     }
