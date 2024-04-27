@@ -9,6 +9,17 @@ module.exports = {
         .setDescription('Setup your profile for Cryptology 2.'),
 
     async execute(interaction) {
+        const userData = await db.get(`shackData.${interaction.user.id}`) || null;
+
+        // If data is already present, update it
+        if (userData) {
+            // You can customize the response if the user has already configured settings
+            return await interaction.reply({
+                content: "Your profile is already set up! You can use another command to update your settings.",
+                ephemeral: true
+            });
+        }
+
         // Initial interaction asking for timer reminder setup
         const row = new ActionRowBuilder()
             .addComponents(

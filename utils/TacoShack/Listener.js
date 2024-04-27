@@ -262,6 +262,20 @@ function parseCooldown(value) {
             return 0;
     }
 }
+
+function extractUsernameFromFooter(footerText) {
+    let usernamePart;
+    if (footerText.includes("Use '/menu view' to view the items you are cooking!")) {
+        // Extract the part after the specific text, assuming it's structured as instructional text followed by username and location
+        usernamePart = footerText.split("\n")[1]; // The username and location are after the newline
+    } else {
+        // Handle the regular footer format which is just username and location
+        usernamePart = footerText;
+    }
+    // Assume the username and location are separated by ' | ', extract the first part as the username
+    return usernamePart.split(' | ')[0].trim();
+}
+
 module.exports = {
     handleTacoShackMessageCreate: function (client) {
         const enable_reminders = require('./timerReaction.js');
@@ -347,6 +361,57 @@ module.exports = {
                             collector.on('end', collected => {
                                 if (collected.size === 0) console.log("No reactions collected.");
                             });
+                        } else if (embed.description) {
+                                const username = extractUsernameFromFooter(embed.footer.text);
+                                console.log(username);
+                                const userSetupData = await db.get(`shackData`) || {};
+                                const userIds = Object.keys(userSetupData);
+                                const matchedUserId = userIds.find(id =>
+                                    userSetupData[id].info &&
+                                    userSetupData[id].info.username === username
+                                );
+                                console.log(`message.guild.id is ${message.guild.id}`);
+                                if (!matchedUserId) {
+                                    await message.react('⚠️');
+                                    console.log(`User ${username} not found in the database.`);
+                                    return;
+                                } 
+                                const remindersEnabled = userSetupData[matchedUserId].info.reminders;
+                                if (remindersEnabled == `Disabled`) {
+                                    console.log(`Reminders are disabled for ${username}.`);
+                                    return;
+                                }
+                                const userData = await db.get(`shackData.${matchedUserId}`);
+                                const serverPatreonSettings = await db.get(`patreonPerks_${message.guild.id}`) || {};
+                                const donatorPacks = require('./donatorPacks.json');
+                                const donatorRank = userData.info.donatorRank || 'None';
+                                const donatorSettings = donatorPacks[donatorRank];
+                        
+                                // Calculate effective cooldowns
+                                const effectiveWorkCooldown = Math.max(0, donatorSettings.workCooldown - (serverPatreonSettings.workCooldown || 0));
+                                const effectiveTipCooldown = Math.max(0, donatorSettings.tipCooldown - (serverPatreonSettings.tipCooldown || 0));
+                                const overtimeCooldown = 30 * 60; // 30 minutes in seconds
+                                // Log settings for debug purposes
+                                console.log(`Settings for guild ${message.guild.id}:`, JSON.stringify(serverPatreonSettings));
+                                console.log(`Effective work cooldown: ${effectiveWorkCooldown} seconds, Effective tip cooldown: ${effectiveTipCooldown} seconds`);
+                        
+                                // // Send message to channel after cooldown periods
+                                // setTimeout(() => {
+                                //     message.channel.send(`<@${matchedUserId}> Your work cooldown is now ready!`);
+                                // }, effectiveWorkCooldown * 1000); // Convert seconds to milliseconds
+                                if (embed.description.includes("in tips!")) {
+                                    setTimeout(() => {
+                                        message.channel.send(`<@${matchedUserId}> Your tips cooldown is now ready!`);
+                                    }, effectiveTipCooldown * 1000); // Convert seconds to milliseconds
+                                } else if (embed.footer.text.includes("Use '/menu view' to view the items you are cooking!")) {
+                                    setTimeout(() => {
+                                        message.channel.send(`<@${matchedUserId}> Your work cooldown is now ready!`);
+                                    }, effectiveWorkCooldown * 1000); // Convert seconds to milliseconds
+                                } else if (embed.description.includes("while working overtime!")) {
+                                    setTimeout(() => {
+                                        message.channel.send(`<@${matchedUserId}> Your overtime cooldown is now ready!`);
+                                    }, overtimeCooldown * 1000); // Convert seconds to milliseconds
+                                }
                         } else {
                             console.log("Message does not include 'Cooldowns' in the title.");
                         }
