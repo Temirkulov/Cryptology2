@@ -271,6 +271,8 @@ function extractUsernameFromFooter(footerText) {
         usernamePart = footerText.split("\n")[1]; // The username and location are after the newline
     } else if (footerText.includes("🏁 Complete all your tasks to earn rewards!")) {
         usernamePart = footerText.split("\n")[1]; // The username and location are after the newline
+    } else if (footerText.includes("Your Total Streak:")) {
+            usernamePart = footerText.split("\n").pop(); // The username and location are at the end after all newlines
     } else {
         // Handle the regular footer format which is just username and location
         usernamePart = footerText;
@@ -379,15 +381,15 @@ module.exports = {
                 
                                 if (embed.description.includes("in tips!")) {
                                     setReminder(matchedUserId, 'Tips', effectiveTipCooldown, () => {
-                                        message.channel.send(`<@${matchedUserId}> Your tips cooldown is now ready!`);
+                                        message.channel.send(`<@${matchedUserId}> Your </tips:1203826208383696957> cooldown is now ready!`);
                                     });
                                 } else if (embed.footer.text.includes("Use '/menu view' to view the items you are cooking!")) {
                                     setReminder(matchedUserId, 'Work', effectiveWorkCooldown, () => {
-                                        message.channel.send(`<@${matchedUserId}> Your work cooldown is now ready!`);
+                                        message.channel.send(`<@${matchedUserId}> Your </work:1203826210250166292> cooldown is now ready!`);
                                     });
                                 } else if (embed.description.includes("while working overtime!")) {
                                     setReminder(matchedUserId, 'Overtime', overtimeCooldown, () => {
-                                        message.channel.send(`<@${matchedUserId}> Your overtime cooldown is now ready!`);
+                                        message.channel.send(`<@${matchedUserId}> Your </overtime:1203826204356911104> cooldown is now ready!`);
                                     });
                                 }
                             } else {
