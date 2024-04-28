@@ -47,7 +47,9 @@ module.exports = {
 
         // Save to database
         await db.set(`franchise_${name}`, { work, tips, overtime, income });
-
+        const storedData = await db.get(`franchise_${name}`);
+        console.log(`Franchise added: ${JSON.stringify(storedData)}`);
+        
         return interaction.reply({ content: `Franchise ${name} added with Work: ${work}, Tips: ${tips}, Overtime: ${overtime}, Income: $${income}`, ephemeral: false });
     }
 };

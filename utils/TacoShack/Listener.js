@@ -3,6 +3,7 @@ const { QuickDB } = require("quick.db");
 const db = new QuickDB();
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const ms = require('ms'); // npm install ms -- a small utility to parse various time formats to milliseconds
+const { setReminder } = require('./reminderManager'); // Ensure the path is correct
 
 const {
     // setActiveLocation,
@@ -218,29 +219,29 @@ async function updateHQInfoFromEmbed(userId, embedFields) {
 }
 
 
-async function setReminder(client, userId, field, message) {
-    const userData = await db.get(`shackData.${userId}`);
-    if (!userData || !userData.reminders) {
-        console.log(`No data found for user ${userId}, or reminders are disabled.`);
-        return; // Stop if no user data or reminders disabled
-    }
+// async function setReminder(client, userId, field, message) {
+//     const userData = await db.get(`shackData.${userId}`);
+//     if (!userData || !userData.reminders) {
+//         console.log(`No data found for user ${userId}, or reminders are disabled.`);
+//         return; // Stop if no user data or reminders disabled
+//     }
 
-    // Calculate the delay in milliseconds from the value
-    const delayMilliseconds = parseCooldown(field.value);
+//     // Calculate the delay in milliseconds from the value
+//     const delayMilliseconds = parseCooldown(field.value);
 
-    console.log(`Setting a reminder for ${userId} - ${field.name}: Delay set for ${delayMilliseconds}ms`);
-    setTimeout(async () => {
-        try {
-            console.log(`Reminder triggered for ${userId} - ${field.name}`);
-            await message.reply({
-                content: `<@${userId}> Your cooldown for ${field.name} is now ready!`,
-                ephemeral: true // Change this to false if you want the reply to be visible to everyone
-            });
-        } catch (error) {
-            console.error('Error sending reminder:', error);
-        }
-    }, delayMilliseconds);
-}
+//     console.log(`Setting a reminder for ${userId} - ${field.name}: Delay set for ${delayMilliseconds}ms`);
+//     setTimeout(async () => {
+//         try {
+//             console.log(`Reminder triggered for ${userId} - ${field.name}`);
+//             await message.reply({
+//                 content: `<@${userId}> Your cooldown for ${field.name} is now ready!`,
+//                 ephemeral: true // Change this to false if you want the reply to be visible to everyone
+//             });
+//         } catch (error) {
+//             console.error('Error sending reminder:', error);
+//         }
+//     }, delayMilliseconds);
+// }
 
 function parseCooldown(value) {
     const regex = /(\d+)\s*(seconds|minutes|hours)/;
@@ -268,6 +269,8 @@ function extractUsernameFromFooter(footerText) {
     if (footerText.includes("Use '/menu view' to view the items you are cooking!")) {
         // Extract the part after the specific text, assuming it's structured as instructional text followed by username and location
         usernamePart = footerText.split("\n")[1]; // The username and location are after the newline
+    } else if (footerText.includes("🏁 Complete all your tasks to earn rewards!")) {
+        usernamePart = footerText.split("\n")[1]; // The username and location are after the newline
     } else {
         // Handle the regular footer format which is just username and location
         usernamePart = footerText;
@@ -275,6 +278,31 @@ function extractUsernameFromFooter(footerText) {
     // Assume the username and location are separated by ' | ', extract the first part as the username
     return usernamePart.split(' | ')[0].trim();
 }
+async function askToEnableReminders(message, userData) {
+    const enableRow = new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('enable_reminders')
+                .setLabel('Enable Reminders')
+                .setStyle(ButtonStyle.Success),
+            new ButtonBuilder()
+                .setCustomId('disable_reminders')
+                .setLabel('No Thanks')
+                .setStyle(ButtonStyle.Danger)
+        );
+
+    const askEmbed = new EmbedBuilder()
+        .setColor(0x0099FF)
+        .setTitle('Enable Timer Reminders?')
+        .setDescription('Do you want to enable reminders for TacoShack cooldowns? Your current Donator Rank is ' + (userData.info.donatorRank || 'None'));
+
+    // Send the message to the channel from which the original reaction came
+    await message.channel.send({ embeds: [askEmbed], components: [enableRow] });
+
+    // Optionally, you might handle the response immediately here, or you can handle it in the main interaction listener
+}
+
+
 
 module.exports = {
     handleTacoShackMessageCreate: function (client) {
@@ -289,11 +317,13 @@ module.exports = {
                         const embed = message.embeds[0];
                         console.log(embed);
                         console.log("Found embed:", embed);
+                        const reminderManager = require('./reminderManager'); // Import centralized reminder manager
+
                         if (embed.title && embed.title.includes("Cooldowns")) {
                             await message.react('⏰');
                             const filter = (reaction, user) => reaction.emoji.name === '⏰' && !user.bot;
                             const collector = message.createReactionCollector({ filter, time: 20000, maxUsers: 1 });
-
+            
                             collector.on('collect', async (reaction, user) => {
                                 const userData = await db.get(`shackData.${user.id}`) || {};
                                 const cooldownData = {
@@ -301,121 +331,68 @@ module.exports = {
                                     fields: embed.fields.map(field => ({ name: field.name, value: field.value })),
                                     timestamp: new Date().getTime()
                                 };
-                                console.log(`Cooldown data collected for user ${user.username}:`);
-                                console.log(cooldownData);
-                                // Store the cooldown data linked to the user ID
+                                console.log(`Cooldown data collected for user ${user.username}:`, cooldownData);
                                 await db.set(`cooldownEmbed_${user.id}`, cooldownData);
             
-    
                                 if (!userData.reminders) {
-                                    const enableRow = new ActionRowBuilder()
-                                        .addComponents(
-                                            new ButtonBuilder()
-                                                .setCustomId('enable_reminders')
-                                                .setLabel('Enable Reminders')
-                                                .setStyle(ButtonStyle.Success),
-                                            new ButtonBuilder()
-                                                .setCustomId('disable_reminders')
-                                                .setLabel('No Thanks')
-                                                .setStyle(ButtonStyle.Danger)
-                                        );
-
-                                    const askEmbed = new EmbedBuilder()
-                                        .setColor(0x0099FF)
-                                        .setTitle('Enable Timer Reminders?')
-                                        .setDescription('Do you want to enable reminders for TacoShack cooldowns? Your current Donator Rank is ' + (userData.info.donatorRank || 'None'));
-
-                                    await reaction.message.channel.send({ embeds: [askEmbed], components: [enableRow] });
+                                    // Ask to enable reminders if not already enabled
+                                    await askToEnableReminders(reaction.message, user);
                                 } else {
+                                    // Process existing reminders
                                     console.log(`Processing reminders for ${user.id}`);
-                                    embed.fields.forEach(field => {
-                                        if (field.value.startsWith('❌')) {
-                                            setReminder(client, user.id, field, message);
-                                        }
-                                    });
-                                        const reminderRow = new ActionRowBuilder()
-                                        .addComponents(
-                                            new ButtonBuilder()
-                                                .setCustomId('disable_reminders')
-                                                .setLabel('Disable Reminders')
-                                                .setStyle(ButtonStyle.Danger),
-                                            new ButtonBuilder()
-                                                .setCustomId('keep_reminders')
-                                                .setLabel('Keep Reminders')
-                                                .setStyle(ButtonStyle.Success)
-                                        );
-
-                                    const currentSettings = cooldownData.fields.map(field => `${field.name}: ${field.value}`).join('\n');
-                                    const activeReminderEmbed = new EmbedBuilder()
-                                        .setColor(0x0099FF)
-                                        .setTitle('Reminders Currently Active')
-                                        .setDescription(`Your reminders are active for the following cooldowns:\n${currentSettings}`)
-                                        .setFooter({ text: 'You can disable these reminders at any time.' });
-
-                                    await reaction.message.channel.send({ embeds: [activeReminderEmbed], components: [reminderRow] });
-                
-
+                                    reminderManager.processReminders(message, user.id, cooldownData);
                                 }
                             });
-
+            
                             collector.on('end', collected => {
                                 if (collected.size === 0) console.log("No reactions collected.");
                             });
-                        } else if (embed.description) {
+                            } else if (embed.description) {
                                 const username = extractUsernameFromFooter(embed.footer.text);
-                                console.log(username);
                                 const userSetupData = await db.get(`shackData`) || {};
                                 const userIds = Object.keys(userSetupData);
-                                const matchedUserId = userIds.find(id =>
-                                    userSetupData[id].info &&
-                                    userSetupData[id].info.username === username
-                                );
-                                console.log(`message.guild.id is ${message.guild.id}`);
+                                const matchedUserId = userIds.find(id => userSetupData[id].info && userSetupData[id].info.username === username);
+                
                                 if (!matchedUserId) {
                                     await message.react('⚠️');
                                     console.log(`User ${username} not found in the database.`);
                                     return;
-                                } 
-                                const remindersEnabled = userSetupData[matchedUserId].info.reminders;
-                                if (remindersEnabled == `Disabled`) {
+                                }
+                
+                                const userData = await db.get(`shackData.${matchedUserId}`);
+                                if (!userData || userData.info.reminders === 'Disabled') {
                                     console.log(`Reminders are disabled for ${username}.`);
                                     return;
                                 }
-                                const userData = await db.get(`shackData.${matchedUserId}`);
+                
                                 const serverPatreonSettings = await db.get(`patreonPerks_${message.guild.id}`) || {};
                                 const donatorPacks = require('./donatorPacks.json');
                                 const donatorRank = userData.info.donatorRank || 'None';
                                 const donatorSettings = donatorPacks[donatorRank];
-                        
+                
                                 // Calculate effective cooldowns
-                                const effectiveWorkCooldown = Math.max(0, donatorSettings.workCooldown - (serverPatreonSettings.workCooldown || 0));
-                                const effectiveTipCooldown = Math.max(0, donatorSettings.tipCooldown - (serverPatreonSettings.tipCooldown || 0));
-                                const overtimeCooldown = 30 * 60; // 30 minutes in seconds
-                                // Log settings for debug purposes
+                                const effectiveWorkCooldown = Math.max(0, donatorSettings.workCooldown - (serverPatreonSettings.workCooldown || 0)) * 1000; // milliseconds
+                                const effectiveTipCooldown = Math.max(0, donatorSettings.tipCooldown - (serverPatreonSettings.tipCooldown || 0)) * 1000; // milliseconds
+                                const overtimeCooldown = 30 * 60 * 1000; // 30 minutes in milliseconds
+                
                                 console.log(`Settings for guild ${message.guild.id}:`, JSON.stringify(serverPatreonSettings));
-                                console.log(`Effective work cooldown: ${effectiveWorkCooldown} seconds, Effective tip cooldown: ${effectiveTipCooldown} seconds`);
-                        
-                                // // Send message to channel after cooldown periods
-                                // setTimeout(() => {
-                                //     message.channel.send(`<@${matchedUserId}> Your work cooldown is now ready!`);
-                                // }, effectiveWorkCooldown * 1000); // Convert seconds to milliseconds
+                
                                 if (embed.description.includes("in tips!")) {
-                                    setTimeout(() => {
+                                    setReminder(matchedUserId, 'Tips', effectiveTipCooldown, () => {
                                         message.channel.send(`<@${matchedUserId}> Your tips cooldown is now ready!`);
-                                    }, effectiveTipCooldown * 1000); // Convert seconds to milliseconds
+                                    });
                                 } else if (embed.footer.text.includes("Use '/menu view' to view the items you are cooking!")) {
-                                    setTimeout(() => {
+                                    setReminder(matchedUserId, 'Work', effectiveWorkCooldown, () => {
                                         message.channel.send(`<@${matchedUserId}> Your work cooldown is now ready!`);
-                                    }, effectiveWorkCooldown * 1000); // Convert seconds to milliseconds
+                                    });
                                 } else if (embed.description.includes("while working overtime!")) {
-                                    setTimeout(() => {
+                                    setReminder(matchedUserId, 'Overtime', overtimeCooldown, () => {
                                         message.channel.send(`<@${matchedUserId}> Your overtime cooldown is now ready!`);
-                                    }, overtimeCooldown * 1000); // Convert seconds to milliseconds
+                                    });
                                 }
-                        } else {
-                            console.log("Message does not include 'Cooldowns' in the title.");
-                        }
-                        
+                            } else {
+                                console.log("Message does not include 'Cooldowns' in the title.");
+                            }
                     } else {
                         console.log("No embeds found in this message.");
                     }

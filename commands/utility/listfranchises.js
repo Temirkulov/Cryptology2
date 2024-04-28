@@ -13,21 +13,30 @@ module.exports = {
             return interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
         }
 
-        const keys = await db.keys('franchise_*');
-        if (keys.length === 0) {
+        // Fetch all data from the database and ensure it is properly formatted
+        const allData = await db.all();
+        let franchiseData = [];
+        for (const item of allData) {
+            // Ensure each item has an ID and it starts with 'franchise_'
+            if (item.ID && item.ID.startsWith('franchise_')) {
+                franchiseData.push({ key: item.ID, data: item.value });
+            }
+        }
+
+        if (!franchiseData.length) {
             return interaction.reply({ content: 'No franchises found in the database.', ephemeral: true });
         }
 
         let response = '**Franchises:**\n';
-        for (const key of keys) {
-            const franchise = await db.get(key);
+        for (const data of franchiseData) {
+            const key = data.key;
+            const franchise = data.data;
             response += `**${key.replace('franchise_', '')}:** Income $${franchise.income}, Work x${franchise.work}, Tips x${franchise.tips}, Overtime x${franchise.overtime}\n`;
         }
 
-        // Ensure the message does not exceed Discord's character limit for a single message.
+        // Check for response length to avoid exceeding Discord's limit
         if (response.length >= 2000) {
-            // Split the response into manageable chunks, or consider sending multiple messages or using follow-up messages
-            response = response.substring(0, 1997) + '...'; // Simple example to truncate long messages
+            response = response.substring(0, 1997) + '...';
         }
 
         await interaction.reply({ content: response, ephemeral: true });

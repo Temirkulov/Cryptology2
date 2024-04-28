@@ -1,6 +1,7 @@
 const { ActionRowBuilder, ButtonBuilder, EmbedBuilder, ButtonStyle } = require('discord.js');
 const { QuickDB } = require('quick.db');
 const db = new QuickDB();
+const reminderManager = require('./reminderManager'); // Adjust the path as necessary
 
 function parseCooldown(value) {
     // Parse the cooldown value from the field value string
@@ -62,45 +63,29 @@ module.exports = {
             if (['enable_reminders', 'disable_reminders'].includes(interaction.customId)) {
                 await interaction.deferUpdate();
 
-                // Fetch stored embed data or fetch the message again if needed
-                const embedData = await db.get(`cooldownEmbed_${userId}`); // Assuming you've stored it before
+                const embedData = await db.get(`cooldownEmbed_${userId}`);
                 if (!embedData) {
                     return interaction.followUp({ content: "Cooldown data not found.", ephemeral: true });
                 }
 
-                const remindersEnabled = interaction.customId === 'enable_reminders';
-                userData.reminders = remindersEnabled;
+                userData.reminders = interaction.customId === 'enable_reminders';
                 await db.set(`shackData.${userId}`, userData);
 
-                const fields = embedData.fields; // Assuming fields are stored in embedData
-                const donatorRank = userData.info.donatorRank || 'None';
-
-                if (remindersEnabled) {
-                    const updatedFields = fields.map(field => {
-                        const { name, value } = field;
-                        let newValue = value.includes('READY') ? '✅ **READY**' : calculateCooldown(name, value, donatorRank, userData);
-                        return { name, value: `Current: ${value}\nNext: ${newValue}`, inline: field.inline };
-                    });
-
-                    const reminderEmbed = new EmbedBuilder()
-                        .setColor(0x0099FF)
-                        .setTitle('Cooldown Reminder Setup Complete')
-                        .setDescription(`Reminders have been configured. Your current Donator Rank: ${donatorRank}`)
-                        .addFields(updatedFields)
-                        .setFooter({ text: 'Timers will be reminded as per the calculated cooldown durations.' });
-
-                    await interaction.editReply({ embeds: [reminderEmbed], components: [] });
+                if (userData.reminders) {
+                    // Process enabling reminders
+                    reminderManager.enableReminders(userId, embedData);
                 } else {
-                    const noReminderEmbed = new EmbedBuilder()
-                        .setColor(0x0099FF)
-                        .setTitle('Cooldown Reminders Disabled')
-                        .setDescription('You will not receive reminders for your cooldowns.')
-                        .setFooter({ text: 'You can enable reminders anytime by reacting to the cooldown messages.' });
-
-                    await interaction.editReply({ embeds: [noReminderEmbed], components: [] });
+                    // Process disabling reminders
+                    reminderManager.disableReminders(userId);
                 }
+
+                // Prepare a response message depending on the action taken
+                const messageContent = userData.reminders ?
+                    "Reminders have been enabled. You'll be notified as per the cooldown times." :
+                    "Reminders have been disabled. You will no longer receive notifications.";
+
+                await interaction.followUp({ content: messageContent, ephemeral: true });
             }
         });
     }
 };
-
