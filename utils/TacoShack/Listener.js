@@ -323,11 +323,20 @@ module.exports = {
 
                         if (embed.title && embed.title.includes("Cooldowns")) {
                             await message.react('⏰');
+                            const username = extractUsernameFromFooter(embed.footer.text);  // Ensure this function is robust to handle various footer formats
+                            const userSetupData = await db.get(`shackData`) || {};                        
+                            const userIds = Object.keys(userSetupData);
+                            const matchedUserId = userIds.find(id => userSetupData[id].info && userSetupData[id].info.username === username);
+                            if (!matchedUserId) {
+                                await message.react('⚠️');
+                                console.log(`User ${username} not found in the database.`);
+                                return;
+                            }                
+                            const userData = await db.get(`shackData.${matchedUserId}`) || {};                        
                             const filter = (reaction, user) => reaction.emoji.name === '⏰' && !user.bot;
                             const collector = message.createReactionCollector({ filter, time: 20000, maxUsers: 1 });
             
                             collector.on('collect', async (reaction, user) => {
-                                const userData = await db.get(`shackData.${user.id}`) || {};
                                 const cooldownData = {
                                     userId: user.id,
                                     fields: embed.fields.map(field => ({ name: field.name, value: field.value })),
@@ -336,20 +345,32 @@ module.exports = {
                                 console.log(`Cooldown data collected for user ${user.username}:`, cooldownData);
                                 await db.set(`cooldownEmbed_${user.id}`, cooldownData);
             
-                                if (!userData.reminders) {
-                                    // Ask to enable reminders if not already enabled
-                                    await askToEnableReminders(reaction.message, user);
+                                if (userData.reminders) {
+                                    const activeReminders = await db.get(`activeReminders.${matchedUserId}`) || {};
+                                    const reminderMessage = Object.keys(activeReminders).reduce((msg, key) => {
+                                        return msg + `${key}: Next reminder at ${new Date(activeReminders[key]).toLocaleTimeString()}\n`;
+                                    }, "Your active reminders:\n");
+                
+                                    await reaction.message.reply({ content: reminderMessage, ephemeral: true });
                                 } else {
-                                    // Process existing reminders
-                                    console.log(`Processing reminders for ${user.id}`);
-                                    reminderManager.processReminders(message, user.id, cooldownData);
+                                    await askToEnableReminders(reaction.message, userData);
                                 }
-                            });
+                                });
             
                             collector.on('end', collected => {
                                 if (collected.size === 0) console.log("No reactions collected.");
                             });
-                            } else if (embed.description) {
+                            if (userData.reminders) {
+                                const cooldownData = {
+                                    userId: matchedUserId,
+                                    fields: embed.fields.map(field => ({ name: field.name, value: field.value })),
+                                    timestamp: new Date().getTime()
+                                };
+                                console.log(`Processing autonomous reminders for ${matchedUserId}`);
+                                reminderManager.processReminders(message, matchedUserId, cooldownData);
+                            }
+                    
+                            } else if (embed.description && embed.footer && embed.footer.text) {
                                 const username = extractUsernameFromFooter(embed.footer.text);
                                 const userSetupData = await db.get(`shackData`) || {};
                                 const userIds = Object.keys(userSetupData);
