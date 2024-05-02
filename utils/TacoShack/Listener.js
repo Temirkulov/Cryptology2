@@ -3,7 +3,7 @@ const { QuickDB } = require("quick.db");
 const db = new QuickDB();
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const ms = require('ms'); // npm install ms -- a small utility to parse various time formats to milliseconds
-const { setReminder } = require('./reminderManager'); // Ensure the path is correct
+const { activeReminders, setReminder, clearReminderFromDB, listActiveReminders } = require('./reminderManager'); // Adjust path as necessary
 
 const {
     // setActiveLocation,
@@ -346,12 +346,8 @@ module.exports = {
                                 await db.set(`cooldownEmbed_${user.id}`, cooldownData);
             
                                 if (userData.reminders) {
-                                    const activeReminders = await db.get(`activeReminders.${matchedUserId}`) || {};
-                                    const reminderMessage = Object.keys(activeReminders).reduce((msg, key) => {
-                                        return msg + `${key}: Next reminder at ${new Date(activeReminders[key]).toLocaleTimeString()}\n`;
-                                    }, "Your active reminders:\n");
-                
-                                    await reaction.message.reply({ content: reminderMessage, ephemeral: true });
+                                    const remindersResult = await listActiveReminders(user.id, reaction.user.author);
+                                    await reaction.message.reply({ ...remindersResult, ephemeral: true });
                                 } else {
                                     await askToEnableReminders(reaction.message, userData);
                                 }
