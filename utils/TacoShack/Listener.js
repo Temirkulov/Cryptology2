@@ -346,7 +346,7 @@ module.exports = {
                                 await db.set(`cooldownEmbed_${user.id}`, cooldownData);
             
                                 if (userData.reminders) {
-                                    const remindersResult = await listActiveReminders(user.id, reaction.user.author);
+                                    const remindersResult = await listActiveReminders(user.id, reaction.message);
                                     await reaction.message.reply({ ...remindersResult, ephemeral: true });
                                 } else {
                                     await askToEnableReminders(reaction.message, userData);

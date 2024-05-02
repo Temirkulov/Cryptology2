@@ -137,8 +137,9 @@ function parseTimeAndUnit(value) {
 }
 
 
-async function listActiveReminders(userId, author) {
+async function listActiveReminders(userId, message) {
     const allReminders = await db.startsWith(`reminder_${userId}`);
+    let user = await message.client.users.fetch(userId);  // Fetch user information to get avatar and username
     const now = Date.now();
     let hasReminders = false;
 
@@ -146,8 +147,8 @@ async function listActiveReminders(userId, author) {
         .setColor(0xFF9900)  // Warm orange color
         .setTitle('🔔 Your Active Reminders')
         .setDescription("Checking for active reminders...")
-        .setThumbnail(author.displayAvatarURL())
-        .setFooter({ text: `Reminders for ${author.username}`, iconURL: author.displayAvatarURL() });
+        .setThumbnail(user.displayAvatarURL())
+        .setFooter({ text: `Reminders for ${user.username}`, iconURL: user.displayAvatarURL() });
 
     if (allReminders.length === 0) {
         embed.setDescription("You currently have no active reminders.");
