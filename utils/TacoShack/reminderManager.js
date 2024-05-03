@@ -192,7 +192,7 @@ function formatTime(milliseconds) {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
 
-    return `${hours > 0 ? `${hours} hours ` : ''}${minutes > 0 ? `${minutes} minutes ` : ''}${seconds} seconds`;
+    return `${hours > 0 ? `${hours}h ` : ''}${minutes > 0 ? `${minutes} min ` : ''}${seconds}s`;
 }
 
 function parseCooldown(value) {
