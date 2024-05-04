@@ -112,7 +112,9 @@ function formatReminderMessage(userId, reminderType) {
     const reminderTypeIds = {
         'Tips': '1203826208383696957',
         'Work': '1203826210250166292',
-        'Overtime': '1203826204356911104'
+        'Overtime': '1203826204356911104',
+        'Daily' : '1203826197352677416',
+        'Clean' : '1203826195511250967'
     };
     const commandId = reminderTypeIds[reminderType] || 'default';
     return `<@${userId}> Your </${reminderType.toLowerCase()}:${commandId}> is now ready!`;
@@ -137,11 +139,13 @@ function parseTimeAndUnit(value) {
 }
 
 
-async function listActiveReminders(userId, message) {
+async function listActiveReminders(userId, message, client) {
+    
     const allReminders = await db.startsWith(`reminder_${userId}`);
     let user = await message.client.users.fetch(userId);  // Fetch user information to get avatar and username
     const now = Date.now();
     let hasReminders = false;
+    // Call the exported functions from each module
 
     const embed = new EmbedBuilder()
         .setColor(0xFF9900)  // Warm orange color
@@ -175,11 +179,7 @@ async function listActiveReminders(userId, message) {
             new ButtonBuilder()
                 .setCustomId('toggle_reminders')
                 .setLabel(hasReminders ? 'Disable Reminders' : 'Enable Reminders')
-                .setStyle(ButtonStyle.Primary),
-            new ButtonBuilder()
-                .setCustomId('view_profile')
-                .setLabel('View Profile')
-                .setStyle(ButtonStyle.Secondary)
+                .setStyle(hasReminders ? ButtonStyle.Success : ButtonStyle.Danger),
         );
 
     return { embeds: [embed], components: [row] };
@@ -228,5 +228,6 @@ module.exports = {
     disableReminders,
     processReminders,
     parseCooldown,
+    formatTime,
     listActiveReminders
 };

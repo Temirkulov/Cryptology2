@@ -448,9 +448,7 @@ module.exports = {
             }
         ])
         .setFooter({ text: `${interaction.user.username} | ${beautifyLocation(userData.info.activeLocation || 'default')}` });
-
-    await interaction.reply({ embeds: [embed] });
-
+        await interaction.reply({ embeds: [embed] });
 }
         );
     }

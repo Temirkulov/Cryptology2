@@ -346,9 +346,11 @@ module.exports = {
                                 await db.set(`cooldownEmbed_${user.id}`, cooldownData);
             
                                 if (userData.reminders) {
-                                    const remindersResult = await listActiveReminders(user.id, reaction.message);
-                                    await reaction.message.reply({ ...remindersResult, ephemeral: true });
-                                } else {
+                                    const remindersResult = await listActiveReminders(user.id, reaction.message, client);
+                                    if (!reaction.message.acknowledged) { // Check if the interaction has not been previously acknowledged
+                                        await reaction.message.reply({ ...remindersResult, ephemeral: true }).catch(console.error);
+                                    }
+                                        } else {
                                     await askToEnableReminders(reaction.message, userData);
                                 }
                                 });
