@@ -139,51 +139,6 @@ function parseTimeAndUnit(value) {
 }
 
 
-async function listActiveReminders(userId, message, client) {
-    
-    const allReminders = await db.startsWith(`reminder_${userId}`);
-    let user = await message.client.users.fetch(userId);  // Fetch user information to get avatar and username
-    const now = Date.now();
-    let hasReminders = false;
-    // Call the exported functions from each module
-
-    const embed = new EmbedBuilder()
-        .setColor(0xFF9900)  // Warm orange color
-        .setTitle('🔔 Your Active Reminders')
-        .setDescription("Checking for active reminders...")
-        .setThumbnail(user.displayAvatarURL())
-        .setFooter({ text: `Reminders for ${user.username}`, iconURL: user.displayAvatarURL() });
-
-    if (allReminders.length === 0) {
-        embed.setDescription("You currently have no active reminders.");
-    } else {
-        embed.setDescription("Here's when your next activities are due:");
-        for (const reminder of allReminders) {
-            if (!reminder.id) {
-                console.error("Reminder object is missing the 'id' property:", reminder);
-                continue;
-            }
-
-            const fieldName = reminder.id.split('_').pop();
-            const executionTime = reminder.value.executionTime;
-            const timeLeftMs = executionTime - now;
-            const timeLeft = formatTime(timeLeftMs);
-
-            embed.addFields({ name: `⏰ ${fieldName}`, value: `Next reminder in ${timeLeft}`, inline: false });
-            hasReminders = true;
-        }
-    }
-
-    const row = new ActionRowBuilder()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId('toggle_reminders')
-                .setLabel(hasReminders ? 'Disable Reminders' : 'Enable Reminders')
-                .setStyle(hasReminders ? ButtonStyle.Success : ButtonStyle.Danger),
-        );
-
-    return { embeds: [embed], components: [row] };
-}
 
 function formatTime(milliseconds) {
     let totalSeconds = Math.round(milliseconds / 1000);
@@ -229,5 +184,37 @@ module.exports = {
     processReminders,
     parseCooldown,
     formatTime,
-    listActiveReminders
+
+    reminderHandler: function (client) {
+        client.on('interactionCreate', async interaction => {
+            if (!interaction.isButton()) return;
+        
+            // Handle Reminder Toggle Button
+            if (interaction.customId === 'toggle_reminders') {
+                // Prevent interaction from expiring
+                await interaction.deferUpdate();
+        
+                const userId = interaction.user.id;
+                const userData = await db.get(`shackData.${userId}`);
+        
+                if (!userData) {
+                    console.log(`No user data found for user ID: ${userId}`);
+                    return;
+                }
+        
+                // Toggle the reminder state
+                userData.reminders = !userData.reminders;
+                await db.set(`shackData.${userId}`, userData);
+        
+                // Update the user on the new state of their reminders
+                const newState = userData.reminders ? "enabled" : "disabled";
+                await interaction.followUp({ content: `Reminders have been ${newState}.`, ephemeral: true });
+        
+                // Optionally, refresh the message to show updated buttons or information
+                // This part depends on how you want to handle UI updates
+                // For example, send a new message or update the existing one with the new state of reminders
+            }
+        });
+        
+    }
 };

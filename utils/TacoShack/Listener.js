@@ -3,7 +3,7 @@ const { QuickDB } = require("quick.db");
 const db = new QuickDB();
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const ms = require('ms'); // npm install ms -- a small utility to parse various time formats to milliseconds
-const { activeReminders, setReminder, clearReminderFromDB, listActiveReminders } = require('./reminderManager'); // Adjust path as necessary
+const { activeReminders, setReminder, formatTime,clearReminderFromDB, listActiveReminders } = require('./reminderManager'); // Adjust path as necessary
 
 const {
     // setActiveLocation,
@@ -311,7 +311,131 @@ module.exports = {
         const enable_reminders = require('./timerReaction.js');
         // Call the exported functions from each module
         enable_reminders.timerReactionHandler(client);
+        const toggle_reminders = require('./reminderManager.js');
+        // Call the exported functions from each module
+        toggle_reminders.reminderHandler(client);
 
+        
+        client.on('messageCreate', async message => {
+            const logChannelId = await db.get(`guild_${message.guildId}_logChannel`);
+            if (message.channel.id !== logChannelId || message.author.bot !== true || message.author.id !== '490707751832649738') return;
+        
+            const donationRegex = /\*\*(.+?)\*\* \`\[(\d+)\]\` has donated `\$([\d,]+)`/;
+            const joinRegex = /\*\*(.+?)\*\* invited \*\*(.+?)\*\* \`\[(\d+)\]\` to the franchise!/;
+            const leaveRegex = /\*\*(.+?)\*\* \`\[(\d+)\]\` has left the franchise!/;
+            const upgradeRegex = /\*\*Franchise upgraded to __Power Level (\d+)__\*\*!/;
+        
+            if (donationRegex.test(message.content)) {
+                await handleDonation(message, donationRegex);
+            } else if (joinRegex.test(message.content)) {
+                await handleJoin(message, joinRegex);
+            } else if (leaveRegex.test(message.content)) {
+                await handleLeave(message, leaveRegex);
+            } else if (upgradeRegex.test(message.content)) {
+                await handleUpgrade(message);
+            } else {
+                await handleOtherMessage(message);
+            }
+        });
+        
+        async function handleDonation(message, regex) {
+            const [, username, userId, amount] = message.content.match(regex);
+            console.log(`Donation: User ${username} [${userId}] donated $${amount}`);
+            await updateLeaderboard(message.guildId, userId, username, parseInt(amount.replace(/,/g, ''), 10));
+            message.react('722034513043128322'); // React with money bag emoji for donations
+        }
+        
+        async function handleJoin(message, regex) {
+            // Extract data using the regex, log it, and react
+            message.react('🎉'); // Party popper emoji for new joins
+        }
+        
+        async function handleLeave(message, regex) {
+            // Extract data using the regex, log it, and react
+            message.react('🚶'); // Walking person emoji for leaves
+        }
+        
+        async function handleUpgrade(message) {
+            // Log upgrade info and react
+            message.react('⬆️'); // Upwards arrow for upgrades
+        }
+        
+        async function handleOtherMessage(message) {
+            // Generic emoji for other types of messages
+            message.react('722034513043128322'); // Custom emoji for other messages
+        }
+        
+        async function updateLeaderboard(guildId, userId, username, amount) {
+            const key = `leaderboard_${guildId}`;
+            let leaderboard = await db.get(key) || {};
+            if (leaderboard[userId]) {
+                leaderboard[userId].total += amount;
+            } else {
+                leaderboard[userId] = { username: username, total: amount };
+            }
+            await db.set(key, leaderboard);
+            await updateLeaderboardMessage(guildId);
+        }
+        
+        async function updateLeaderboardMessage(guildId) {
+            const leaderboardChannelId = await db.get(`guild_${guildId}_leaderboardChannel`);
+            const channel = await client.channels.fetch(leaderboardChannelId);
+            if (!channel) return;
+        
+            const leaderboard = await db.get(`leaderboard_${guildId}`);
+            const sortedEntries = Object.entries(leaderboard).sort((a, b) => b[1].total - a[1].total);
+        
+            // Calculate total donations for the week
+            let totalDonations = 0;
+            sortedEntries.forEach(([, data]) => {
+                totalDonations += data.total;
+            });
+        
+            const embed = new EmbedBuilder()
+                .setTitle('Weekly Donation Leaderboard')
+                .setDescription('Top donors for this week:')
+                .setColor('FFD700');
+        
+            // Add top donors to the embed
+            for (let index = 0; index < sortedEntries.length && index < 15; index++) {
+                const [userId, data] = sortedEntries[index];
+                const user = await client.users.fetch(userId).catch(console.error);
+                const username = user ? user.username : 'Unknown User'; 
+                embed.addFields({ name: `${index + 1}. ${username}`, value: `$${data.total.toLocaleString()}`, inline: false });
+            }
+        
+            // Add the total weekly donations
+            embed.addFields({ name: '**Total Weekly Donations**', value: `**$${totalDonations.toLocaleString()}**`, inline: false });
+        
+            const messageId = await db.get(`leaderboardMessage_${guildId}`);
+            try {
+                if (messageId) {
+                    const message = await channel.messages.fetch(messageId);
+                    await message.edit({ embeds: [embed] });
+                } else {
+                    const sent = await channel.send({ embeds: [embed] });
+                    await db.set(`leaderboardMessage_${guildId}`, sent.id);
+                }
+            } catch (error) {
+                console.error("Error updating or sending leaderboard message:", error);
+                if (error.code === 10008) { // Handle unknown message
+                    const sent = await channel.send({ embeds: [embed] });
+                    await db.set(`leaderboardMessage_${guildId}`, sent.id);
+                }
+            }
+        }
+                                        
+        // Setting up a cron job to reset the leaderboard every Monday at 00:00 CST
+        const cron = require('node-cron');
+        cron.schedule('0 0 * * 1', async () => {
+            const guildIds = await db.get('guilds'); // Assuming you store guild IDs somewhere
+            guildIds.forEach(async (guildId) => {
+                await db.set(`leaderboard_${guildId}`, {}); // Reset leaderboard
+                await updateLeaderboardMessage(guildId); // Update message to reflect the reset
+            });
+        });
+        
+       
         client.on('messageCreate', async message => {
             if (message.author.bot && message.author.id === '490707751832649738') {
                 setTimeout(async () => {
@@ -346,10 +470,52 @@ module.exports = {
                                 await db.set(`cooldownEmbed_${user.id}`, cooldownData);
             
                                 if (userData.reminders) {
-                                    const remindersResult = await listActiveReminders(user.id, reaction.message, client);
-                                    if (!reaction.message.acknowledged) { // Check if the interaction has not been previously acknowledged
-                                        await reaction.message.reply({ ...remindersResult, ephemeral: true }).catch(console.error);
+                                    const allReminders = await db.startsWith(`reminder_${user.id}`);
+                                    // let user = await message.client.users.fetch(user.id);  // Fetch user information to get avatar and username
+                                    const now = Date.now();
+                                    let hasReminders = false;
+                                    // Call the exported functions from each module
+                                    const userData = await db.get(`shackData.${user.id}`);
+                                
+                                    const embed = new EmbedBuilder()
+                                        .setColor(0xFF9900)  // Warm orange color
+                                        .setTitle('🔔 Your Active Reminders')
+                                        .setDescription("Checking for active reminders...")
+                                        .setThumbnail(user.displayAvatarURL())
+                                        .setFooter({ text: `Reminders for ${user.username}`, iconURL: user.displayAvatarURL() });
+                                
+                                    if (allReminders.length === 0) {
+                                        embed.setDescription("You currently have no active reminders.");
+                                    } else {
+                                        embed.setDescription("Your next Reminder in:");
+                                        for (const reminder of allReminders) {
+                                            if (!reminder.id) {
+                                                console.error("Reminder object is missing the 'id' property:", reminder);
+                                                continue;
+                                            }
+                                
+                                            const fieldName = reminder.id.split('_').pop();
+                                            const executionTime = reminder.value.executionTime;
+                                            const timeLeftMs = executionTime - now;
+                                            const timeLeft = formatTime(timeLeftMs);
+                                
+                                            embed.addFields({ name: `${fieldName}`, value: `${timeLeft}`, inline: false });
+                                            hasReminders = true;
+                                        }
                                     }
+                                
+                                    const toggleAction = userData.reminders ? 'Disable' : 'Enable';
+                                    const row = new ActionRowBuilder()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setCustomId('toggle_reminders')
+                                                .setLabel(`${toggleAction} Reminders`)
+                                                .setLabel(hasReminders ? 'Disable Reminders' : 'Enable Reminders')
+                                                .setStyle(hasReminders ? ButtonStyle.Danger : ButtonStyle.Success),
+                                        );
+                                
+                                    await reaction.message.reply( { embeds: [embed], components: [row] });
+                                                                    
                                         } else {
                                     await askToEnableReminders(reaction.message, userData);
                                 }
@@ -381,7 +547,7 @@ module.exports = {
                                 }
                 
                                 const userData = await db.get(`shackData.${matchedUserId}`);
-                                if (!userData || userData.info.reminders === 'Disabled') {
+                                if (!userData || userData.reminders === false) {
                                     console.log(`Reminders are disabled for ${username}.`);
                                     return;
                                 }
@@ -397,16 +563,29 @@ module.exports = {
                                 const overtimeCooldown = 30 * 60 * 1000; // 30 minutes in milliseconds
                 
                                 console.log(`Settings for guild ${message.guild.id}:`, JSON.stringify(serverPatreonSettings));
-                
+                            
                                 if (embed.description.includes("in tips!")) {
+                                    // if (!userData || userData.info.reminders === 'Disabled') {
+                                    //     console.log(`Reminders are disabled for ${username}.`);
+                                    //     return;
+                                    // }    
                                     setReminder(matchedUserId, 'Tips', effectiveTipCooldown, () => {
                                         message.channel.send(`<@${matchedUserId}> Your </tips:1203826208383696957> cooldown is now ready!`);
                                     });
                                 } else if (embed.footer.text.includes("Use '/menu view' to view the items you are cooking!")) {
+                                    // if (!userData || userData.userData.reminders === false') {
+                                    //     console.log(`Reminders are disabled for ${username}.`);
+                                    //     return;
+                                    // }    
                                     setReminder(matchedUserId, 'Work', effectiveWorkCooldown, () => {
                                         message.channel.send(`<@${matchedUserId}> Your </work:1203826210250166292> cooldown is now ready!`);
                                     });
                                 } else if (embed.description.includes("while working overtime!")) {
+                                    // if (!userData || userData.info.reminders === 'Disabled') {
+                                    //     console.log(`Reminders are disabled for ${username}.`);
+                                    //     return;
+                                    // } 
+    
                                     setReminder(matchedUserId, 'Overtime', overtimeCooldown, () => {
                                         message.channel.send(`<@${matchedUserId}> Your </overtime:1203826204356911104> cooldown is now ready!`);
                                     });
@@ -516,6 +695,7 @@ module.exports = {
                 }
             }
         });
+        
     }
             
 
