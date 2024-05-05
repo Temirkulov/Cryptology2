@@ -452,7 +452,7 @@ module.exports = {
                             const userIds = Object.keys(userSetupData);
                             const matchedUserId = userIds.find(id => userSetupData[id].info && userSetupData[id].info.username === username);
                             if (!matchedUserId) {
-                                await message.react('⚠️');
+                                // await message.react('⚠️');
                                 console.log(`User ${username} not found in the database.`);
                                 return;
                             }                
@@ -541,7 +541,7 @@ module.exports = {
                                 const matchedUserId = userIds.find(id => userSetupData[id].info && userSetupData[id].info.username === username);
                 
                                 if (!matchedUserId) {
-                                    await message.react('⚠️');
+                                    // await message.react('⚠️');
                                     console.log(`User ${username} not found in the database.`);
                                     return;
                                 }
@@ -638,7 +638,7 @@ module.exports = {
                         console.log(`Processing update for user: ${username} in location: ${activeLocation} for category: ${category}`);
 
                         if (!matchedUserId) {
-                            await newMessage.react('⚠️');
+                            // await newMessage.react('⚠️');
                             console.log(`User ${username} not found in the database.`);
                             return;
                         } 
