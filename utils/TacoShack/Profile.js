@@ -217,7 +217,19 @@ async function calculateIncomeDetails(userId) {
     // Utility incomes
     const franchiseIncomeBonus = getFranchiseStatusIncomeBonus(userData.info.franchiseStatus);
     const levelIncomeBonus = getLevelIncomeBonus(userData.info.level);
-    const franchiseIncome = 9800+franchiseIncomeBonus;
+    const userfranchisefound = userData.info.franchise;
+    let franchiseIncome = 0;
+    if (userfranchisefound !== "🏢 None") {
+        const franchiseIncomefound = await db.get(`franchise_${userfranchisefound}`);
+        
+        // If the franchise data exists and has an income field, use it
+        if (franchiseIncomefound && franchiseIncomefound.income) {
+            franchiseIncome = franchiseIncomefound.income + franchiseIncomeBonus;
+        }
+    } else {
+        // If franchise is "None", we ensure income stays at 0
+        console.log("User is not part of any franchise. Setting income to 0.");
+    }
     const hqIncome = userData.hq.info.income;
     const menuIncome = 2600;
     const maxHqIncome = 14000;
@@ -354,6 +366,75 @@ function beautifyAllLocations(locations) {
     return result || 'No detailed location data available';
 }
 
+async function calculateLocationsUnlocked(userData) {
+    const locations = userData.location || {};
+    const unlockedLocations = Object.entries(locations)
+        .filter(([key, loc]) => loc.info && loc.info.income > 0)
+        .map(([key]) => beautifyLocation(key)); // beautifyLocation should format location names nicely
+
+    return unlockedLocations.join(', ');
+}
+
+// Calculate total spent for all locations
+async function calculateTotalSpent(userData) {
+    let totalSpent = 0;
+    const locations = Object.keys(userData.location || {});
+    for (const locationKey of locations) {
+        const financialData = await calculateFinancialProgress(userData.info.userid, locationKey);
+        // Remove commas before converting to number
+        console.log(typeof financialData.totalSpent, financialData.totalSpent);
+        const cleanTotalSpent = parseInt(financialData.totalSpent.replace(/[\s,]+/g, ''), 10);
+        totalSpent += cleanTotalSpent;
+    }
+    // Format at the end of the calculation
+    return totalSpent.toLocaleString();
+}
+
+// Calculate total potential spending to max out all locations
+async function calculateTotalToMax(userData) {
+    let totalToMax = 0;
+    const locations = Object.keys(userData.location || {});
+    for (const locationKey of locations) {
+        const financialData = await calculateFinancialProgress(userData.info.userid, locationKey);
+        // Remove commas before converting to number
+        const cleanTotalToMax = parseInt(financialData.totalToMax.replace(/[\s,]+/g, ''), 10);
+        totalToMax += cleanTotalToMax;
+    }
+    // Format at the end of the calculation
+    return totalToMax.toLocaleString();
+}
+
+function calculateTotalIncome(userData) {
+    let totalIncome = 0;
+    for (const locationKey in userData.location) {
+        if (userData.location[locationKey].info && userData.location[locationKey].info.income) {
+            totalIncome += userData.location[locationKey].info.income;
+        }
+    }
+    return totalIncome.toLocaleString();
+}
+
+
+// async function calculateTotalPercentageMaxed(userData) {
+//     let totalSpent = 0;
+//     let totalToMax = 0;
+//     const locations = Object.keys(userData.location || {});
+
+//     for (const locationKey of locations) {
+//         const financialData = await calculateFinancialProgress(userData.info.userid, locationKey);
+//         totalSpent += parseInt(financialData.totalSpent.replace(/[\$,]/g, ''), 10); // Remove commas and dollar signs, then parse as integer
+//         totalToMax += parseInt(financialData.totalToMax.replace(/[\$,]/g, ''), 10); // Remove commas and dollar signs, then parse as integer
+//     }
+//     console.log(`Total Spent is: ${totalSpent}`)
+//     console.log(`Total max is: ${totalToMax}`)
+//     const overallPercentageMaxed = totalToMax > 0 ? (totalSpent / totalToMax) * 100 : 0;
+//     return {
+//         totalSpent: totalSpent.toLocaleString(), // Format as a string with commas
+//         totalToMax: totalToMax.toLocaleString(), // Format as a string with commas
+//         percentageMaxed: overallPercentageMaxed.toFixed(2) // Format to two decimal places
+//     };
+// }
+
 module.exports = {
     profileHandler: function (client) {
         client.on('interactionCreate', async (interaction) => {
@@ -402,8 +483,30 @@ module.exports = {
     // Specific data for the active location
     const financialProgressActive = await calculateFinancialProgress(userId, userData.info.activeLocation);
     const incomeDetails = await calculateIncomeDetails(userId);
-
-    const embed = new EmbedBuilder()
+    const totalspent =await calculateTotalSpent(userData);
+    const totaltomax = await calculateTotalToMax(userData);
+    const parsedTotalSpent = parseInt(totalspent.replace(/\s/g, ''), 10);
+    const parsedTotalToMax = parseInt(totaltomax.replace(/\s/g, ''), 10);
+    const percentageMax = (parsedTotalSpent / parsedTotalToMax) * 100;
+    const formattedPercentageMax = percentageMax.toFixed(2);
+    const usersfranchise = userData.info.franchise;
+    console.log(usersfranchise)
+    const usersFranchise = userData.info.franchise;
+    let franchiseIncome = 0; // Default to 0
+    
+    // Check if the user is part of a franchise
+    if (usersFranchise !== "🏢 None") {
+        const franchiseData = await db.get(`franchise_${usersFranchise}`);
+        
+        // If the franchise data exists and has an income field, use it
+        if (franchiseData && franchiseData.income) {
+            franchiseIncome = franchiseData.income;
+        }
+    } else {
+        // If franchise is "None", we ensure income stays at 0
+        console.log("User is not part of any franchise. Setting income to 0.");
+    }
+        const embed = new EmbedBuilder()
         .setColor('#FFB6C1')
         .setTitle(`${userData.info.username || 'User'}'s Comprehensive Profile Report`)
         .setDescription("Detailed financial and operational report for all locations.")
@@ -423,24 +526,24 @@ module.exports = {
                        `**Achieved Max Income**: ${incomeDetails.achievedMaxIncomestring}\n`,
                 inline: false
             },
-            // {
-            //     name: '📝 Other Locations',
-            //     value: `**Locations Unlocked**: ${actualFunction.result}\n` +
-            //     `**Locations Maxed**: ${actualFunction.locationsandnames}%\n` +
-            //     `**Total Spent**: $${actualFunction}\n` +
-            //     `**Total to Max**: $${financialProgressActive.totalToMax}\n` +
-            //     `**Total Income**: $${actualFunction.totalIncome}\n` +
-            //     `**Total Percentage Maxed**: $${actualFunction.totalPercentageMaxed}\n`,
-            //     inline: false
-            // },
             {
+                name: '📝 Other Locations',
+                value: `**Locations Unlocked**: ${await calculateLocationsUnlocked(userData)}\n` +
+                       `**Total Spent**: $${totalspent}\n` +
+                       `**Total to Max**: $${totaltomax}\n` +
+                       `**Total Income**: $${calculateTotalIncome(userData)}\n` +
+                       `**Total Percentage Maxed**: ${formattedPercentageMax}%\n`,
+                inline: false
+            },
+                {
                 name: '📒 Miscellaneous Data',
-                value: `**Shift Income**: $${incomeDetails.shiftIncome}\n` +
-                       `**Tips Income**: $${incomeDetails.tipsIncome}\n` +
+                value: 
+                // `**Shift Income**: $${incomeDetails.shiftIncome}\n` +
+                //        `**Tips Income**: $${incomeDetails.tipsIncome}\n` +
                        `**Level Income**: $${incomeDetails.levelIncome}\n` +
-                       `**Franchise Income**: $${incomeDetails.franchiseIncome}\n` +
+                       `**Franchise Income**: $${franchiseIncome}\n` +
                        `**Donator Status**: ${userData.info.donatorRank || 'None'}\n` +
-                       `**HQ Income**: ${userData.weeklyShifts}\n` +
+                       `**HQ Income**: ${userData.hq.info.income}\n` +
                        `**Franchise Name**: ${userData.info.franchise}\n`,
 
                     //    `**Patreon Server**: ${actualFunction.checkIfGuildPatreon? 'yes' : 'no'}\n`,
