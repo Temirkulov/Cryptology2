@@ -22,7 +22,7 @@
         "flowers": { "max0": 9, "max1": 20, "max2": 30, "max": 40,"initialPrice": 100, "boost": 5 },
         "ornaments": { "max0": 8, "max1": 15, "max2": 30, "max": 35,"initialPrice": 200, "boost": 10 },
         "lights": { "max0": 5, "max1": 10, "max2": 25, "max": 30,"initialPrice": 1000, "boost": 30 },
-        "mural": { "max0": 1, "max1": 3, "max2": 5, "max": 5,"initialPrice": 1500, "boost": 100 },
+        "mural": { "max0": 1, "max1": 3, "max2": 5, "max": 5,"initialPrice": 15000, "boost": 100 },
         "statue": { "max0": 1, "max1": 2, "max2": 3, "max": 3,"initialPrice": 500000, "boost": 400 }
     }, "advertisements": {
         "newspaper": { "max0": 10, "max1": 15, "max2": 30, "max": 35,"initialPrice": 350, "boost": 10 },
