@@ -199,7 +199,7 @@ async function updateHQInfoFromEmbed(userId, embedFields) {
                     } else if (bonus.includes('Overtime:')) {
                         parsedData.overtime = parseFloat(bonus.match(/(\d+)x Money/)[1]);
                     } else if (bonus.includes('Lunch Rush:')) {
-                        parsedData.lunchRush = parseInt(bonus.match(/\+(\d+) Hours/)[1], 10);
+                        parsedData.lunchRush = parseInt(bonus.match(/\+(\d+) Hour(s?)/)[1], 10);
                     } else if (bonus.includes('Task Multiplier:')) {
                         parsedData.taskMultiplier = parseFloat(bonus.match(/(\d+)x Task Rewards/)[1]);
                     }
