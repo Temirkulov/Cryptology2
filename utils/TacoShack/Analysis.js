@@ -22,6 +22,9 @@ function calculateNextLevelCost(level, initialCost) {
 async function prepareUpgradeRecommendationEmbed(userId, selectedLocation = null) {
     const userData = await db.get(`shackData.${userId}`) || {};
     // Determine the location to use for the calculation - either the selected one or the user's current active location
+    if (!userData || !userData.info || (!selectedLocation && !userData.info.activeLocation)) {
+        throw new Error("You need to run /setup first and react to your /shack embed before running analysis!");
+    }
     const activeLocation = selectedLocation || userData.info.activeLocation;
     const result = await calculateDynamicOptimalUpgrades(userId, activeLocation); // Updated to pass selectedLocation
     const beautifiedLocation = beautifyLocation(activeLocation); // Use the updated activeLocation
@@ -215,8 +218,15 @@ module.exports = {
             // Handle button interaction as before
             if (interaction.isButton() && interaction.customId === 'analysis') {
                 const userId = interaction.user.id;
-                const { embeds, components } = await prepareUpgradeRecommendationEmbed(userId);
-                await interaction.reply({ embeds, components });
+                try {
+                    const { embeds, components } = await prepareUpgradeRecommendationEmbed(userId);
+                    // Additional code to handle successful preparation...
+                    await interaction.reply({ embeds, components });
+                } catch (error) {
+                    console.error(error);
+                    await interaction.reply({ content: error.message, ephemeral: true });
+                }
+        
             }
             // Handle select menu interaction
         });
