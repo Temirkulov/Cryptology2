@@ -21,7 +21,7 @@ async function calculateDynamicOptimalUpgrades(userId, selectedLocation) {
     const upgradeDefinitions = require('./shackData.json').locations; // Make sure this correctly points to your upgrades definitions.
     // const activeLocation = userData.info.activeLocation;
     const activeLocation = selectedLocation || userData.info.activeLocation;
-    const expansionActive = userData.location[activeLocation].info.expansion; // true or false
+    const expansionActive = userData.location[activeLocation].info.expansion || false;
     const locationData = userData.location[activeLocation];
     const locationUpgradeDefinitions = upgradeDefinitions[activeLocation]; // Make sure this correctly points to your upgrades definitions.
 
