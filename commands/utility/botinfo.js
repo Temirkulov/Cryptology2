@@ -25,12 +25,29 @@ module.exports = {
             .addFields(
                 { name: ':bar_chart: Bot Statistics', value: `**Servers**: ${interaction.client.guilds.cache.size}\n**Users**: ${interaction.client.users.cache.size}\n**Channels**: ${interaction.client.channels.cache.size}`, inline: false },
                 { name: ':page_facing_up: Bot Information', value: `**Creator**: kulovich\n**Original Creator**: ocryptic\n**Contributors**: gegeberry\n**Version**: 1.0\n**Lines of Code**: ${totalLinesOfCode}`, inline: false },
-                { name: ':computer: Hosting Information', value: `**Memory Usage**: ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB\n**RAM**: ${(os.totalmem() / 1024 / 1024).toFixed(2)} MB\n**Uptime**: ${Math.floor(process.uptime())} seconds\n**Node.js**: ${process.version}\n**Discord.js**: ${require('discord.js').version}\n**Operating System**: ${os.type()} ${os.release()}`, inline: false }
-            );
+                { name: ':computer: Hosting Information', value: `**Memory Usage**: ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB\n**RAM**: ${(os.totalmem() / 1024 / 1024).toFixed(2)} MB\n**Uptime**: ${formatUptime(Math.floor(process.uptime()))}\n**Node.js**: ${process.version}\n**Discord.js**: ${require('discord.js').version}\n**Operating System**: ${os.type()} ${os.release()}`, inline: false }
+                );
 
         await interaction.reply({ embeds: [embed] });
     }
 };
+
+function formatUptime(uptime) {
+    const seconds = Math.floor(uptime % 60);
+    const minutes = Math.floor((uptime / 60) % 60);
+    const hours = Math.floor((uptime / (60 * 60)) % 24);
+    const days = Math.floor(uptime / (60 * 60 * 24));
+    const weeks = Math.floor(uptime / (60 * 60 * 24 * 7));
+
+    let timeString = '';
+    if (weeks > 0) timeString += `${weeks} week${weeks > 1 ? 's' : ''}, `;
+    if (days > 0) timeString += `${days} day${days > 1 ? 's' : ''}, `;
+    if (hours > 0) timeString += `${hours} hour${hours > 1 ? 's' : ''}, `;
+    if (minutes > 0) timeString += `${minutes} minute${minutes > 1 ? 's' : ''}, `;
+    timeString += `${seconds} second${seconds > 1 ? 's' : ''}`;
+
+    return timeString;
+}
 
 function countLinesOfCode(directory) {
     let totalLines = 0;

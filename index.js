@@ -34,11 +34,11 @@ const tacoShackListeners = require('./utils/TacoShack/Listener');
 
 // Use the listener functions
 //reaction listeners
-idleCapReactionListener.handleIdleCapReactionAdd(client);
+// idleCapReactionListener.handleIdleCapReactionAdd(client);
 tacoShackReactionListener.handleTacoShackReactionAdd(client);
 //message listeners
-idleCapListeners.handleIdleCapMessageCreate(client);
-idleCapListeners.handleIdleCapMessageUpdate(client);
+// idleCapListeners.handleIdleCapMessageCreate(client);
+// idleCapListeners.handleIdleCapMessageUpdate(client);
 tacoShackListeners.handleTacoShackMessageCreate(client);
 tacoShackListeners.handleTacoShackMessageUpdate(client);
 
