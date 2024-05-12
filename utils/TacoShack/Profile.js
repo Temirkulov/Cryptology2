@@ -446,7 +446,7 @@ module.exports = {
             const percentageMaxed = await calculatePercentageMaxed(userId);
             // const incomeDetails = await calculateIncomeDetails(userId);
             const timeToMax = await estimateTimeToMax(userId);
-            const userfranchise = userData.info.franchise;
+            const userfranchise = userData.info.franchise || '🏢 None';
             const locationData = userData.location || {}; // Default to an empty object if userData.location is undefined
             const franchisedata = await db.get(`franchiseData.${userfranchise}`) || {};
             
