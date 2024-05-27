@@ -114,7 +114,8 @@ function formatReminderMessage(userId, reminderType) {
         'Work': '1203826210250166292',
         'Overtime': '1203826204356911104',
         'Daily' : '1203826197352677416',
-        'Clean' : '1203826195511250967'
+        'Clean' : '1203826195511250967',
+        'Vote' : '1203826209532682312',
     };
     const commandId = reminderTypeIds[reminderType] || 'default';
     return `<@${userId}> Your </${reminderType.toLowerCase()}:${commandId}> is now ready!`;

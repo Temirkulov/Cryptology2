@@ -23,7 +23,8 @@ async function prepareUpgradeRecommendationEmbed(userId, selectedLocation = null
     const userData = await db.get(`shackData.${userId}`) || {};
     // Determine the location to use for the calculation - either the selected one or the user's current active location
     if (!userData || !userData.info || (!selectedLocation && !userData.info.activeLocation)) {
-        throw new Error("You need to run /setup first and react to your /shack embed before running analysis!");
+        message.channel.send(`${userId} You need to run /setup first`);
+        throw new Error(`${userId} You need to run /setup first and react to your /shack embed before running analysis!`);
     }
     const activeLocation = selectedLocation || userData.info.activeLocation;
     const result = await calculateDynamicOptimalUpgrades(userId, activeLocation); // Updated to pass selectedLocation
