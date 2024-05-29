@@ -118,7 +118,12 @@ function formatReminderMessage(userId, reminderType) {
         'Vote' : '1203826209532682312',
     };
     const commandId = reminderTypeIds[reminderType] || 'default';
-    return `<@${userId}> Your </${reminderType.toLowerCase()}:${commandId}> is now ready!`;
+
+    if (reminderType === 'Vote') {
+        return `<@${userId}> Your </Vote Link:${commandId}> is now ready!`;
+    } else {
+        return `<@${userId}> Your </${reminderType.toLowerCase()}:${commandId}> is now ready!`;
+    }
 }
 function shouldSkipReminderUpdate(value, timeLeft) {
     const { time, unit } = parseTimeAndUnit(value);

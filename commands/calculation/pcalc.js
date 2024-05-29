@@ -1,44 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder } = require('discord.js');
        
-       async function minPointsForMultiplier(desiredMultiplier, upgrades, initialCosts) {
-        // Function to calculate the cost-effectiveness of an upgrade
-        const calculateEffectiveness = (multiplier, cost) => -multiplier / cost;
-    
-        // Initializing the array to hold upgrade options
-        let options = upgrades.map((multiplier, index) => ({
-            effectiveness: calculateEffectiveness(multiplier, initialCosts[index]),
-            cost: initialCosts[index],
-            multiplier: multiplier,
-            index: index
-        }));
-    
-        // Sorting options by cost-effectiveness
-        options.sort((a, b) => b.effectiveness - a.effectiveness);
-    
-        let totalMultiplier = 1.0;
-        let totalCost = 0;
-        let purchases = new Array(upgrades.length).fill(0);
-    
-        // While loop to keep purchasing upgrades until the desired multiplier is reached
-        while (totalMultiplier < desiredMultiplier) {
-            for (let i = 0; i < options.length; i++) {
-                if (totalMultiplier >= desiredMultiplier) break;
-                let option = options[i];
-                // Update total cost and multiplier
-                totalCost += option.cost;
-                totalMultiplier *= (1 + option.multiplier);
-                purchases[option.index] += 1;
-                // Update the cost of the purchased upgrade
-                option.cost += initialCosts[option.index];
-                // Re-calculate its cost-effectiveness
-                option.effectiveness = calculateEffectiveness(option.multiplier, option.cost);
-            }
-            // Re-sort options after updating their cost-effectiveness
-            options.sort((a, b) => b.effectiveness - a.effectiveness);
-        }
-    
-        return { totalCost, purchases };
-    }
 
     function calculateWithCaps(upgrades, availablePoints) {
       let totalMultiplier = 1.0; // Starting base multiplier
@@ -222,43 +183,6 @@ const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder } = require('
             });
             description += `** Total Multiplier: ${input}x**\n** Multiplier Caps: ${capsNeeded}**\n**Total Multiplier Caps Cost: ${totalCapCost.toLocaleString('en-US', { minimumFractionDigits: 0 }) }**\n`;
           }
-          // } else if(operation ===`estimate_multi` && interaction.options.getString('with_caps') === 'withoutcaps') {
-          //   function minPointsForAdditiveMultiplier(targetAddedMultiplier, upgrades, initialCosts) {
-          //     let totalAddedMultiplier = 0.0;
-          //     let totalCost = 0;
-          //     let purchases = new Array(upgrades.length).fill(0);
-          //     let currentCosts = [...initialCosts];
-            
-          //     while (totalAddedMultiplier < targetAddedMultiplier) {
-          //         // Calculate cost-effectiveness for each upgrade
-          //         let effectiveness = upgrades.map((upgrade, index) => upgrade / currentCosts[index]);
-          //         // Find the index of the most cost-effective upgrade
-          //         let bestUpgradeIndex = effectiveness.indexOf(Math.max(...effectiveness));
-          //         // Update total cost, purchases, and the total added multiplier
-          //         totalCost += currentCosts[bestUpgradeIndex];
-          //         totalAddedMultiplier += upgrades[bestUpgradeIndex];
-          //         purchases[bestUpgradeIndex]++;
-          //         // Increase the cost for the next purchase of this upgrade
-          //         currentCosts[bestUpgradeIndex] += initialCosts[bestUpgradeIndex];
-            
-          //         if (totalAddedMultiplier >= targetAddedMultiplier) {
-          //             break;
-          //         }
-          //     }
-            
-          //     return { totalCost, purchases };
-          //   }
-            
-            
-          //   const targetMultiplier = input; // Example target multiplier
-          //   const upgrades = [0.05, 0.15, 0.3, 0.5, 1.00];
-          //   const initialCosts = [10, 50, 250, 750, 2500];
-          //   const result = minPointsForAdditiveMultiplier(targetMultiplier, upgrades, initialCosts);
-          //   let description = `**Desired Multiplier: ${input}x**\nMinimum points required: ${result.totalCost}\n`;
-          //   upgrades.forEach((upgrade, index) => {
-          //     description += `${upgrade * 100}% = ${result.purchases[index]} purchases\n`;
-          // });
-          //   }
           
         const responseEmbed = new EmbedBuilder()
         .setTitle("Calculation Result")
