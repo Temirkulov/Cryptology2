@@ -343,21 +343,22 @@ module.exports = {
             console.log(`Donation: User ${username} [${userId}] donated $${amount}`);
             await updateLeaderboard(message.guildId, userId, username, parseInt(amount.replace(/,/g, ''), 10));
             message.react('722034513043128322'); // React with money bag emoji for donations
+            message.react('<a:yes:1247259394287075339>')
         }
         
         async function handleJoin(message, regex) {
             // Extract data using the regex, log it, and react
-            message.react('🎉'); // Party popper emoji for new joins
+            message.react('<a:mwah:1247262815442698280>'); // Party popper emoji for new joins
         }
         
         async function handleLeave(message, regex) {
             // Extract data using the regex, log it, and react
-            message.react('🚶'); // Walking person emoji for leaves
+            message.react('<a:bang_cry:1247263642848858113>'); // Walking person emoji for leaves
         }
         
         async function handleUpgrade(message) {
             // Log upgrade info and react
-            message.react('⬆️'); // Upwards arrow for upgrades
+            message.react('<a:y_rwave:1037517662915395735>'); // Upwards arrow for upgrades
         }
         
         async function handleOtherMessage(message) {
@@ -570,7 +571,7 @@ module.exports = {
                                     //     return;
                                     // }    
                                     setReminder(matchedUserId, 'Tips', effectiveTipCooldown, () => {
-                                        message.channel.send(`<@${matchedUserId}> Your </tips:1203826208383696957> cooldown is now ready!`);
+                                        message.channel.send(`<a:timeout:1247258579354910920> <@${matchedUserId}> Your </tips:1203826208383696957> cooldown is now ready!`);
                                     });
                                 } else if (embed.footer.text.includes("Use '/menu view' to view the items you are cooking!")) {
                                     // if (!userData || userData.userData.reminders === false') {
@@ -578,7 +579,7 @@ module.exports = {
                                     //     return;
                                     // }    
                                     setReminder(matchedUserId, 'Work', effectiveWorkCooldown, () => {
-                                        message.channel.send(`<@${matchedUserId}> Your </work:1203826210250166292> cooldown is now ready!`);
+                                        message.channel.send(`<a:timeout:1247258579354910920> <@${matchedUserId}> Your </work:1203826210250166292> cooldown is now ready!`);
                                     });
                                 } else if (embed.description.includes("while working overtime!")) {
                                     // if (!userData || userData.info.reminders === 'Disabled') {
@@ -587,7 +588,7 @@ module.exports = {
                                     // } 
     
                                     setReminder(matchedUserId, 'Overtime', overtimeCooldown, () => {
-                                        message.channel.send(`<@${matchedUserId}> Your </overtime:1203826204356911104> cooldown is now ready!`);
+                                        message.channel.send(`<a:timeout:1247258579354910920> <@${matchedUserId}> Your </overtime:1203826204356911104> cooldown is now ready!`);
                                     });
                                 }
                             } else {
@@ -605,6 +606,7 @@ module.exports = {
             if (newMessage.author.bot && newMessage.author.id === '490707751832649738') {
                 if (newMessage.embeds.length > 0) {
                     const updatedEmbed = newMessage.embeds[0];
+                    console.log(`Updated Embed: ${updatedEmbed || 'NA'}`);
                     const validTitles = ["Upgrades", "Employees", "Decorations", "Advertisements", "Taco Truck Upgrades", "Mall Kiosk Upgrades", "Ice Cream Stand Upgrades", "Amusement Park Attractions", "Hotdog Cart Upgrades"];
                     const firstField = updatedEmbed.fields[0];
                     console.log(updatedEmbed.fields);
@@ -695,6 +697,7 @@ module.exports = {
                 }
             }
         });
+        
         
     }
             

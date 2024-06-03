@@ -120,9 +120,9 @@ function formatReminderMessage(userId, reminderType) {
     const commandId = reminderTypeIds[reminderType] || 'default';
 
     if (reminderType === 'Vote') {
-        return `<@${userId}> Your </Vote Link:${commandId}> is now ready!`;
+        return `<a:timeout:1247258579354910920> <@${userId}> Your </vote link:${commandId}> is now ready!`;
     } else {
-        return `<@${userId}> Your </${reminderType.toLowerCase()}:${commandId}> is now ready!`;
+        return `<a:timeout:1247258579354910920> <@${userId}> Your </${reminderType.toLowerCase()}:${commandId}> is now ready!`;
     }
 }
 function shouldSkipReminderUpdate(value, timeLeft) {
