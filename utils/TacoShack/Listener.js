@@ -304,10 +304,86 @@ async function askToEnableReminders(message, userData) {
     // Optionally, you might handle the response immediately here, or you can handle it in the main interaction listener
 }
 
+function generateUniqueId(length = 5) {
+    return Math.random().toString(36).substr(2, length);
+}
 
+async function updateUserStats(userId, parsedStats) {
+    let userStats = await db.get(`shackData.${userId}.stats`) || [];
+
+    const timestamp = new Date().toISOString();
+    const uniqueId = generateUniqueId();
+
+    const snapshot = {
+        id: uniqueId,
+        timestamp,
+        data: parsedStats
+    };
+
+    userStats.push(snapshot);
+
+    await db.set(`shackData.${userId}.stats`, userStats);
+    console.log(`Stats snapshot saved for user ID ${userId}. Snapshot ID: ${uniqueId}`);
+
+    return uniqueId; // Return the unique ID
+}
+function extractShackNameFromTitle(title) {
+    return title.replace("'s Stats", "").trim();
+}
+function parseStatsEmbed(description) {
+    const stats = {};
+    const lines = description.split('\n').filter(line => line.trim() !== '');
+
+    lines.forEach(line => {
+        let match;
+        if (match = line.match(/👨‍🍳 \*\*Shifts Worked:\*\* ([\d,]+)/)) {
+            stats.shiftsworked = parseInt(match[1].replace(/,/g, ''), 10);
+        } else if (match = line.match(/👛 \*\*Tips Collected:\*\* ([\d,]+)/)) {
+            stats.tipscollected = parseInt(match[1].replace(/,/g, ''), 10);
+        } else if (match = line.match(/⌛ \*\*Overtime Shifts:\*\* ([\d,]+)/)) {
+            stats.overtimes = parseInt(match[1].replace(/,/g, ''), 10);
+        } else if (match = line.match(/🕓 \*\*Daily Gifts Collected:\*\* ([\d,]+)/)) {
+            stats.dailygiftscollected = parseInt(match[1].replace(/,/g, ''), 10);
+        } else if (match = line.match(/📩 \*\*Total Votes:\*\* ([\d,]+)/)) {
+            stats.totalvotes = parseInt(match[1].replace(/,/g, ''), 10);
+        } else if (match = line.match(/🗒️ \*\*Tasks Completed:\*\* ([\d,]+)/)) {
+            stats.taskscompleted = parseInt(match[1].replace(/,/g, ''), 10);
+        } else if (match = line.match(/💳 \*\*Franchise Donations:\*\* \$([\d,]+)/)) {
+            stats.franchisedonations = parseInt(match[1].replace(/,/g, ''), 10);
+        } else if (match = line.match(/🎲 \*\*Total Gambles:\*\* ([\d,]+)/)) {
+            stats.totalgambles = parseInt(match[1].replace(/,/g, ''), 10);
+        } else if (match = line.match(/💎 \*\*Gambling Winnings:\*\* \$([\d,]+)/)) {
+            stats.gamblingwinnings = parseInt(match[1].replace(/,/g, ''), 10);
+        } else if (match = line.match(/📉 \*\*Gambling Losses:\*\* \$([\d,]+)/)) {
+            stats.gamblinglosses = parseInt(match[1].replace(/,/g, ''), 10);
+        } else if (match = line.match(/🎁 \*\*Gifts Sent:\*\* ([\d,]+)/)) {
+            stats.giftssent = parseInt(match[1].replace(/,/g, ''), 10);
+        } else if (match = line.match(/📥 \*\*Gifts Received:\*\* ([\d,]+)/)) {
+            stats.giftsreceived = parseInt(match[1].replace(/,/g, ''), 10);
+        }
+    });
+
+    return stats;
+}
+// Function to format date and time
+function formatDateTime() {
+    const now = new Date();
+    const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+    return now.toLocaleDateString('en-US', options);
+}
+
+function formatTimestamp() {
+    const now = new Date();
+    return now.toLocaleTimeString('en-US', { hour12: false });
+}
 
 module.exports = {
+    
     handleTacoShackMessageCreate: function (client) {
+        const snapshot = require('./snapshot.js');
+        // Initialize handlers
+        snapshot.snapshotHandler(client);
+
         const enable_reminders = require('./timerReaction.js');
         // Call the exported functions from each module
         enable_reminders.timerReactionHandler(client);
@@ -445,8 +521,89 @@ module.exports = {
                         console.log(embed);
                         console.log("Found embed:", embed);
                         const reminderManager = require('./reminderManager'); // Import centralized reminder manager
-
-                        if (embed.title && embed.title.includes("Cooldowns")) {
+                        if (embed.title && embed.title.includes("Stats")) {
+                            const shackName = extractShackNameFromTitle(embed.title);
+                            const userSetupData = await db.get(`shackData`) || {};
+                            const userIds = Object.keys(userSetupData);
+                            const matchedUserId = userIds.find(id => userSetupData[id].info && userSetupData[id].info.shackName === shackName);
+            
+                            if (!matchedUserId) {
+                                console.log(`User with shackName ${shackName} not found in the database.`);
+                                return;
+                            }
+                        
+                            await message.react('📊'); // React with a stats emoji (you can change it)
+            
+                            const filter = (reaction, user) => reaction.emoji.name === '📊' && !user.bot;
+                            const collector = message.createReactionCollector({ filter, time: 60000 }); // Collect for 60 seconds
+            
+                            collector.on('collect', async (reaction, user) => {
+                                const reactingUserSetupData = await db.get(`shackData.${user.id}`);
+                                if (reactingUserSetupData && reactingUserSetupData.info.shackName === shackName) {
+                                    // Ask for confirmation
+                                    const confirmEmbed = new EmbedBuilder()
+                                        .setTitle("Confirm Snapshot")
+                                        .setDescription(`Are you sure you want to save a snapshot of your Stats?\n**Time:** ${formatTimestamp()}\n**Date:** ${formatDateTime()}`)
+                                        .setColor('#FEFFA3');
+            
+                                    const row = new ActionRowBuilder()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setCustomId('confirm_yes')
+                                                .setLabel('Yes')
+                                                .setStyle(ButtonStyle.Success),
+                                            new ButtonBuilder()
+                                                .setCustomId('confirm_no')
+                                                .setLabel('No')
+                                                .setStyle(ButtonStyle.Danger)
+                                        );
+            
+                                    const confirmMessage = await message.channel.send({ embeds: [confirmEmbed], components: [row] });
+            
+                                    const buttonCollector = confirmMessage.createMessageComponentCollector({ time: 15000 });
+            
+                                    buttonCollector.on('collect', async i => {
+                                        if (i.customId === 'confirm_yes') {
+                                            const uniqueId = generateUniqueId(); // Generate unique ID before updating stats
+                                            const parsedStats = parseStatsEmbed(embed.description);
+                                            await updateUserStats(matchedUserId, parsedStats, uniqueId); // Pass the unique ID
+                                            const savedEmbed = new EmbedBuilder()
+                                                .setTitle("Snapshot Saved")
+                                                .setDescription(`**Date:** ${formatDateTime()}\n**Time:** ${formatTimestamp()}\n**ID:** ${uniqueId}`)
+                                                .setColor('#FEFFA3')
+                                                .setFooter({ text: `Saved by ${user.username}`, iconURL: user.displayAvatarURL() });
+                                    
+                                            const row = new ActionRowBuilder()
+                                                .addComponents(
+                                                    new ButtonBuilder()
+                                                        .setCustomId('view_snapshots')
+                                                        .setLabel('Snapshots')
+                                                        .setStyle(ButtonStyle.Primary)
+                                                );
+                                    
+                                            await i.update({ embeds: [savedEmbed], components: [row] });
+                                        } else if (i.customId === 'confirm_no') {
+                                            await i.update({ content: "Snapshot saving cancelled.", components: [], embeds: [] });
+                                        }
+                                    });
+                                                
+                                    buttonCollector.on('end', collected => {
+                                        if (collected.size === 0) {
+                                            confirmMessage.edit({ content: "No action taken.", components: [], embeds: [] });
+                                        }
+                                    });
+                                } else {
+                                    console.log(`Reacting user's shackName does not match: ${shackName}. Reaction ignored.`);
+                                }
+                            });
+            
+                            collector.on('end', collected => {
+                                if (collected.size === 0) {
+                                    console.log("No reactions collected.");
+                                }
+                            });
+                        }
+                                    if (embed.title && embed.title.includes("Cooldowns")) {
                             await message.react('⏰');
                             const username = extractUsernameFromFooter(embed.footer.text);  // Ensure this function is robust to handle various footer formats
                             const userSetupData = await db.get(`shackData`) || {};                        

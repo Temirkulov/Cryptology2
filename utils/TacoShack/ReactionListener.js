@@ -177,25 +177,26 @@ module.exports = {
                                     shackData.location[categorizedLocation].info.expansion = expansion;
                                     break;
                                     case 'Shack Name':
-                                    const parts2 = field.value.split(' '); // Split the value by spaces
-                                    let shackName = "";
-                                    let expansionLevel = 0; // Initialize expansion level
-                                    for (let part of parts2) {
-                                        if (part.includes('(')) break; // Stop if the part includes a parenthesis
-                                        if (shackName.length > 0) shackName += " "; // Add a space between parts
-                                        shackName += part;
-                                    }
-                                    const activeLocation2 = categorizeLocation(embed.fields[2].value);
-                                    console.log(activeLocation2)
-                                    const locationKey = activeLocation2.toLowerCase(); // Ensure this matches your object keys accurately
-                                    // Count taco emojis in the value string
-                                    expansionLevel = (field.value.match(/🌮/g) || []).length;
-                                    shackData.info.shackName = shackName.trim(); // Set the extracted shack name
-                                    console.log(shackData.info.shackName)
-                                    console.log(`location is ${shackData.location[locationKey]}`)
-                                    console.log(`info is ${shackData.location[locationKey].info}`)
-                                    shackData.location[locationKey].info.expansionLevel = expansionLevel; // Set the expansion level based on taco emoji count
-                                    break;
+                                        // Remove leading red triangle and parentheses
+                                        let shackNameWithTriangle = field.value.trim();
+                                        let shackName = shackNameWithTriangle.replace(/^🔺\s*/, '').split(' (')[0].trim(); // Remove 🔺 and extract name before parenthesis
+                                    
+                                        // Extract active location
+                                        const activeLocation2 = categorizeLocation(embed.fields[2].value);
+                                        console.log(activeLocation2);
+                                        const locationKey = activeLocation2.toLowerCase(); // Ensure this matches your object keys accurately
+                                    
+                                        // Count taco emojis in the value string
+                                        const expansionLevel = (field.value.match(/🌮/g) || []).length;
+                                    
+                                        // Update shackData with extracted values
+                                        shackData.info.shackName = shackName;
+                                        console.log(shackData.info.shackName);
+                                        console.log(`location is ${shackData.location[locationKey]}`);
+                                        console.log(`info is ${shackData.location[locationKey].info}`);
+                                        shackData.location[locationKey].info.expansion = expansionLevel; // Assuming you want to store this as 'expansion'
+                                    
+                                        break;
                                 case 'Franchise':
                                 case 'Franchise | Recruiter':
                                 case 'Franchise | Co-Owner':

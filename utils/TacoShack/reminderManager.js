@@ -130,7 +130,7 @@ function shouldSkipReminderUpdate(value, timeLeft) {
     const timeInMilliseconds = time * (unit.startsWith('hour') ? 3600000 : (unit.startsWith('minute') ? 60000 : 1000));
     
     // Skip if the existing reminder is set to trigger within a minute of the new reminder time for short durations
-    if (Math.abs(timeInMilliseconds - timeLeft) < 60000) {
+    if (Math.abs(timeInMilliseconds - timeLeft) < 59000) {
         return true;  // Skip update if the current reminder is due soon and the new one is not significantly different
     }
     return false;
