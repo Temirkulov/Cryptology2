@@ -32,14 +32,14 @@ module.exports = {
         await db.set(`shackData.${interaction.user.id}`, userData);
 
         const embed = new EmbedBuilder()
-            .setColor(0x0099FF)
+            .setColor('#FEFFA3')
             .setTitle('Account Setup Confirmation')
             .setDescription('Your account has been set up successfully with your selected preferences.')
             .addFields(
                 { name: 'User ID', value: interaction.user.id, inline: false },
                 { name: 'Username', value: interaction.user.username, inline: false },
                 { name: 'Timer Reminders', value: remindersEnabled ? 'Enabled' : 'Disabled', inline: false },
-                { name: 'Suggestion', value: 'Dear **' + interaction.user.username + '** Please react to your /shack for a smooth expeirence!', inline: false },
+                { name: 'Suggestion', value: 'Dear **' + interaction.user.username + '** Please react to your /shack for a smooth experience!', inline: false },
             )
             .setTimestamp();
 

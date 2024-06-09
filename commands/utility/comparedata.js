@@ -298,7 +298,7 @@ module.exports = {
                     {
                         name: '📈 __Efficiency Stats__',
                         value: `<a:ecafe_Working1:1249124191094046804> **Shift Efficiency:** ${formatNumber(efficiencyStats.shiftEfficiency)}%\n` +
-                               `<:tipsfedora:1249124206814171258> **Tips Efficiency:** ${formatNumber(efficiencyStats.tipsEfficiency)}%\n` +
+                               `<:tipsfedora:1249329482435919883> **Tips Efficiency:** ${formatNumber(efficiencyStats.tipsEfficiency)}%\n` +
                                `👨‍💼 **Avg Shifts/Day:** ${formatNumber(efficiencyStats.avgShiftsPerDay)}`,
                         inline: false
                     },
