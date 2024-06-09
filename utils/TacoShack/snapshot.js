@@ -2,22 +2,31 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { QuickDB } = require("quick.db");
 const db = new QuickDB();
 
+// Function to generate a human-readable timestamp in GMT
+function formatTimestamp(timestamp) {
+    const unixTimestamp = Math.floor(new Date(timestamp).getTime() / 1000);
+    return `<t:${unixTimestamp}:F>`;
+}
+
 // Function to generate a page embed for snapshots
 function generatePageEmbed(userStats, page, pageSize) {
+    // Sort snapshots by timestamp (oldest first)
+    userStats.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
     const totalPages = Math.ceil(userStats.length / pageSize);
     const start = page * pageSize;
     const end = Math.min(start + pageSize, userStats.length);
 
     const pageData = userStats.slice(start, end);
     const description = pageData.length > 0
-        ? pageData.map(snapshot => `**ID:** ${snapshot.id}\n**Timestamp:** ${snapshot.timestamp}`).join('\n\n')
+        ? pageData.map(snapshot => `**ID:** ${snapshot.id}\n**Timestamp:** ${formatTimestamp(snapshot.timestamp)}`).join('\n\n')
         : 'No snapshots available.';
 
     return new EmbedBuilder()
         .setTitle('Snapshots')
         .setDescription(description)
         .setFooter({ text: `Page ${page + 1} of ${totalPages || 1}` })
-        .setColor(0x0099FF);
+        .setColor('#FEFFA3');
 }
 
 // Function to create action row with pagination buttons
@@ -31,7 +40,7 @@ function createActionRow(currentPage, totalPages) {
                 .setDisabled(currentPage === 0),
             new ButtonBuilder()
                 .setCustomId('next_page')
-                .setLabel('▶')
+                .setLabel('▶️')
                 .setStyle(ButtonStyle.Primary)
                 .setDisabled(currentPage >= totalPages - 1)
         );

@@ -569,7 +569,7 @@ module.exports = {
                                             await updateUserStats(matchedUserId, parsedStats, uniqueId); // Pass the unique ID
                                             const savedEmbed = new EmbedBuilder()
                                                 .setTitle("Snapshot Saved")
-                                                .setDescription(`**Date:** ${formatDateTime()}\n**Time:** ${formatTimestamp()}\n**ID:** ${uniqueId}`)
+                                                .setDescription(`**Date:** ${formatDateTime()}\n**Time:** ${formatTimestamp()}\n`) //remember to add matching id
                                                 .setColor('#FEFFA3')
                                                 .setFooter({ text: `Saved by ${user.username}`, iconURL: user.displayAvatarURL() });
                                     
