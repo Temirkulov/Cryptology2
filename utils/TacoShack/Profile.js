@@ -508,8 +508,8 @@ module.exports = {
     }
         const embed = new EmbedBuilder()
         .setColor('#FFB6C1')
-        .setTitle(`${userData.info.username || 'User'}'s Comprehensive Profile Report`)
-        .setDescription("Detailed financial and operational report for all locations.")
+        .setTitle(`${userData.info.username || 'User'}'s Profile Report`)
+        .setDescription("Profile Report")
         .setThumbnail(interaction.user.displayAvatarURL())
         .addFields([
             {
@@ -519,10 +519,10 @@ module.exports = {
                        `**Total Spent**: $${financialProgressActive.totalSpent}\n` +
                        `**Total to Max**: $${financialProgressActive.totalToMax}\n` +
                        `**Total Left to Max**: $${financialProgressActive.totalLeft}\n` +
-                       `**Current Income**: $${incomeDetails.storedCurrentIncome}\n` +
-                       `**Actual Income**: $${incomeDetails.actualIncome}\n` +
-                       `**Glitched Income**: $${incomeDetails.glitchedIncome}\n` +
-                       `**Maxed Income**: $${incomeDetails.currentMaxedIncome}\n` +
+                       `**Current Income**: $${incomeDetails.storedCurrentIncome.toLocaleString()}\n` +
+                       `**Actual Income**: $${incomeDetails.actualIncome.toLocaleString()}\n` +
+                       `**Glitched Income**: $${incomeDetails.glitchedIncome.toLocaleString()}\n` +
+                       `**Maxed Income**: $${incomeDetails.currentMaxedIncome.toLocaleString()}\n` +
                        `**Achieved Max Income**: ${incomeDetails.achievedMaxIncomestring}\n`,
                 inline: false
             },

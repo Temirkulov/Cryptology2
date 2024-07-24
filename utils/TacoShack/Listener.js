@@ -4,6 +4,8 @@ const db = new QuickDB();
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const ms = require('ms'); // npm install ms -- a small utility to parse various time formats to milliseconds
 const { activeReminders, setReminder, formatTime,clearReminderFromDB, listActiveReminders } = require('./reminderManager'); // Adjust path as necessary
+const cron = require('node-cron');
+const moment = require('moment-timezone');
 
 const {
     // setActiveLocation,
@@ -189,13 +191,13 @@ async function updateHQInfoFromEmbed(userId, embedFields) {
                 for (const bonus of bonuses) {
                     if (bonus.includes('Income:')) {
                         parsedData.income = parseInt(bonus.replace(/,+/g, '').match(/\+\$(\d+)/)[1], 10);
-                        console.log(parsedData.income);
+                        // console.log(parsedData.income);
                     } else if (bonus.includes('Tip:')) {
                         parsedData.tip = parseFloat(bonus.match(/\+(\d+)%/)[1]) / 100;
-                        console.log(parsedData.tip);
+                        // console.log(parsedData.tip);
                     } else if (bonus.includes('Work:')) {
                         parsedData.work = parseFloat(bonus.match(/\+(\d+)%/)[1]) / 100;
-                        console.log(parsedData.work);
+                        // console.log(parsedData.work);
                     } else if (bonus.includes('Overtime:')) {
                         parsedData.overtime = parseFloat(bonus.match(/(\d+)x Money/)[1]);
                     } else if (bonus.includes('Lunch Rush:')) {
@@ -294,7 +296,7 @@ async function askToEnableReminders(message, userData) {
         );
 
     const askEmbed = new EmbedBuilder()
-        .setColor(0x0099FF)
+        .setColor('#FEFFA3')
         .setTitle('Enable Timer Reminders?')
         .setDescription('Do you want to enable reminders for TacoShack cooldowns? Your current Donator Rank is ' + (userData.info.donatorRank || 'None'));
 
@@ -394,13 +396,13 @@ module.exports = {
         
         client.on('messageCreate', async message => {
             const logChannelId = await db.get(`guild_${message.guildId}_logChannel`);
-            if (message.channel.id !== logChannelId || message.author.bot !== true || message.author.id !== '490707751832649738') return;
-        
+            if (message.channel.id !== logChannelId || !message.author.bot || message.author.id !== '490707751832649738') return;
+
             const donationRegex = /\*\*(.+?)\*\* \`\[(\d+)\]\` has donated `\$([\d,]+)`/;
             const joinRegex = /\*\*(.+?)\*\* invited \*\*(.+?)\*\* \`\[(\d+)\]\` to the franchise!/;
             const leaveRegex = /\*\*(.+?)\*\* \`\[(\d+)\]\` has left the franchise!/;
             const upgradeRegex = /\*\*Franchise upgraded to __Power Level (\d+)__\*\*!/;
-        
+
             if (donationRegex.test(message.content)) {
                 await handleDonation(message, donationRegex);
             } else if (joinRegex.test(message.content)) {
@@ -413,53 +415,62 @@ module.exports = {
                 await handleOtherMessage(message);
             }
         });
-        
+
         async function handleDonation(message, regex) {
             const [, username, userId, amount] = message.content.match(regex);
+            const amountDonated = parseInt(amount.replace(/,/g, ''), 10);
             console.log(`Donation: User ${username} [${userId}] donated $${amount}`);
-            await updateLeaderboard(message.guildId, userId, username, parseInt(amount.replace(/,/g, ''), 10));
-            message.react('722034513043128322'); // React with money bag emoji for donations
-            message.react('<a:yes:1247259394287075339>')
+
+            await updateLeaderboard(message.guildId, userId, username, amountDonated);
+            await message.react('722034513043128322');
+
+            if (amountDonated >= 10000000) {
+                await message.react('<a:hugWholesomeDoge:1253760214272970814>'); // React with special emoji for donations >= 10,000,000
+            } else {
+                 // await message.react('') React with money bag emoji for donations
+            }
         }
-        
+
         async function handleJoin(message, regex) {
-            // Extract data using the regex, log it, and react
-            message.react('<a:mwah:1247262815442698280>'); // Party popper emoji for new joins
+            await message.react('🎉'); // Party popper emoji for new joins
         }
-        
+
         async function handleLeave(message, regex) {
-            // Extract data using the regex, log it, and react
-            message.react('<a:bang_cry:1247263642848858113>'); // Walking person emoji for leaves
+            await message.react('😢'); // Crying emoji for leaves
         }
-        
+
         async function handleUpgrade(message) {
-            // Log upgrade info and react
-            message.react('<a:y_rwave:1037517662915395735>'); // Upwards arrow for upgrades
+            await message.react('⬆️'); // Upwards arrow for upgrades
         }
-        
+
         async function handleOtherMessage(message) {
-            // Generic emoji for other types of messages
-            message.react('722034513043128322'); // Custom emoji for other messages
+            await message.react('722034513043128322'); // Custom emoji for other messages
         }
-        
-        async function updateLeaderboard(guildId, userId, username, amount) {
+
+        async function updateLeaderboard(guildId, userId = null, username = null, amount = null) {
             const key = `leaderboard_${guildId}`;
             let leaderboard = await db.get(key) || {};
-            if (leaderboard[userId]) {
-                leaderboard[userId].total += amount;
-            } else {
-                leaderboard[userId] = { username: username, total: amount };
+
+            if (userId && username && amount !== null) {
+                if (leaderboard[userId]) {
+                    leaderboard[userId].total += amount;
+                } else {
+                    leaderboard[userId] = { username: username, total: amount };
+                }
+                await db.set(key, leaderboard);
             }
-            await db.set(key, leaderboard);
+
             await updateLeaderboardMessage(guildId);
         }
-        
+
+        const { EmbedBuilder } = require('discord.js');
+
         async function updateLeaderboardMessage(guildId) {
             const leaderboardChannelId = await db.get(`guild_${guildId}_leaderboardChannel`);
             const channel = await client.channels.fetch(leaderboardChannelId);
             if (!channel) return;
         
-            const leaderboard = await db.get(`leaderboard_${guildId}`);
+            const leaderboard = await db.get(`leaderboard_${guildId}`) || {};
             const sortedEntries = Object.entries(leaderboard).sort((a, b) => b[1].total - a[1].total);
         
             // Calculate total donations for the week
@@ -471,13 +482,14 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setTitle('Weekly Donation Leaderboard')
                 .setDescription('Top donors for this week:')
-                .setColor('FFD700');
+                .setColor('FFD700')
+                .setFooter({ text: `Last Updated: ${new Date().toLocaleString()}` });
         
             // Add top donors to the embed
             for (let index = 0; index < sortedEntries.length && index < 15; index++) {
                 const [userId, data] = sortedEntries[index];
                 const user = await client.users.fetch(userId).catch(console.error);
-                const username = user ? user.username : 'Unknown User'; 
+                const username = user ? `${user.username}` : 'Unknown User';
                 embed.addFields({ name: `${index + 1}. ${username}`, value: `$${data.total.toLocaleString()}`, inline: false });
             }
         
@@ -501,25 +513,96 @@ module.exports = {
                 }
             }
         }
-                                        
-        // Setting up a cron job to reset the leaderboard every Monday at 00:00 CST
-        const cron = require('node-cron');
-        cron.schedule('0 0 * * 1', async () => {
-            const guildIds = await db.get('guilds'); // Assuming you store guild IDs somewhere
-            guildIds.forEach(async (guildId) => {
-                await db.set(`leaderboard_${guildId}`, {}); // Reset leaderboard
-                await updateLeaderboardMessage(guildId); // Update message to reflect the reset
-            });
-        });
+                                
+        // Setting up cron jobs based on interval
+        const scheduleCronJob = (interval, callback) => {
+            const time = moment.tz('00:00', 'HH:mm', 'America/Los_Angeles');
+            const cronTime = `${time.minutes()} ${time.hours()} * * *`;
         
-       
+            switch (interval) {
+                case 'daily':
+                    cron.schedule(cronTime, callback); // Every day at 00:00 PST
+                    break;
+                case 'weekly':
+                    cron.schedule(`${time.minutes()} ${time.hours()} * * 1`, callback); // Every week on Monday at 00:00 PST
+                    break;
+                case 'monthly':
+                    cron.schedule(`${time.minutes()} ${time.hours()} 1 * *`, callback); // Every month on the 1st at 00:00 PST
+                    break;
+                case 'yearly':
+                    cron.schedule(`${time.minutes()} ${time.hours()} 1 1 *`, callback); // Every year on January 1st at 00:00 PST
+                    break;
+                default:
+                    console.log(`Unknown interval: ${interval}`);
+            }
+        };
+        
+        async function resetLeaderboard() {
+            console.log('Running leaderboard reset cron job...');
+            const guildIds = await db.get('guilds') || [];
+            for (const guildId of guildIds) {
+                console.log(`Resetting leaderboard data for guild ${guildId}...`);
+        
+                const leaderboardChannelId = await db.get(`guild_${guildId}_leaderboardChannel`);
+                const channel = await client.channels.fetch(leaderboardChannelId);
+                if (channel) {
+                    const leaderboard = await db.get(`leaderboard_${guildId}`) || {};
+                    const sortedEntries = Object.entries(leaderboard).sort((a, b) => b[1].total - a[1].total);
+        
+                    // Create top donors message
+                    const topDonorsEmbed = new EmbedBuilder()
+                        .setTitle('Top Donors of the Week')
+                        .setDescription('Congratulations to the top donors!')
+                        .setColor('FFD700')
+                        .setFooter({ text: `Last Updated: ${new Date().toLocaleString()}` });
+        
+                    // Add top 3 donors to the embed
+                    for (let index = 0; index < sortedEntries.length && index < 3; index++) {
+                        const [userId, data] = sortedEntries[index];
+                        const user = await client.users.fetch(userId).catch(console.error);
+                        const username = user ? `${user.username}` : 'Unknown User';
+                        topDonorsEmbed.addFields({ name: `#${index + 1} ${username}`, value: `$${data.total.toLocaleString()}`, inline: false });
+                    }
+        
+                    await channel.send({ embeds: [topDonorsEmbed] });
+        
+                    // Reset leaderboard data
+                    await db.set(`leaderboard_${guildId}`, {});
+        
+                    // Send new leaderboard embed
+                    const newLeaderboardEmbed = new EmbedBuilder()
+                        .setTitle('Weekly Donation Leaderboard')
+                        .setDescription('Top donors for this week:')
+                        .setColor('FFD700')
+                        .setFooter({ text: `Last Updated: ${new Date().toLocaleString()}` });
+        
+                    const sentMessage = await channel.send({ embeds: [newLeaderboardEmbed] });
+                    await db.set(`leaderboardMessage_${guildId}`, sentMessage.id);
+        
+                    console.log(`Leaderboard reset and new leaderboard message sent for guild ${guildId}`);
+                }
+            }
+        }
+            client.on('ready', async () => {
+            const guildIds = await db.get('guilds') || [];
+            for (const guildId of guildIds) {
+                const interval = await db.get(`guild_${guildId}_interval`);
+                if (interval) {
+                    scheduleCronJob(interval, resetLeaderboard);
+                    console.log(`Scheduled cron job for guild ${guildId} with interval ${interval}`);
+                } else {
+                    console.log(`No interval found for guild ${guildId}`);
+                }
+            }
+        });
+
         client.on('messageCreate', async message => {
             if (message.author.bot && message.author.id === '490707751832649738') {
                 setTimeout(async () => {
                     if (message.embeds.length > 0) {
                         const embed = message.embeds[0];
-                        console.log(embed);
-                        console.log("Found embed:", embed);
+                        // console.log(embed);
+                        // console.log("Found embed:", embed);
                         const reminderManager = require('./reminderManager'); // Import centralized reminder manager
                         if (embed.title && embed.title.includes("Stats")) {
                             const shackName = extractShackNameFromTitle(embed.title);
@@ -563,33 +646,42 @@ module.exports = {
                                     const buttonCollector = confirmMessage.createMessageComponentCollector({ time: 15000 });
             
                                     buttonCollector.on('collect', async i => {
-                                        if (i.customId === 'confirm_yes') {
-                                            const uniqueId = generateUniqueId(); // Generate unique ID before updating stats
-                                            const parsedStats = parseStatsEmbed(embed.description);
-                                            await updateUserStats(matchedUserId, parsedStats, uniqueId); // Pass the unique ID
-                                            const savedEmbed = new EmbedBuilder()
-                                                .setTitle("Snapshot Saved")
-                                                .setDescription(`**Date:** ${formatDateTime()}\n**Time:** ${formatTimestamp()}\n`) //remember to add matching id
-                                                .setColor('#FEFFA3')
-                                                .setFooter({ text: `Saved by ${user.username}`, iconURL: user.displayAvatarURL() });
+                                        try {
+                                            if (i.customId === 'confirm_yes') {
+                                                const uniqueId = generateUniqueId(); // Generate unique ID before updating stats
+                                                const parsedStats = parseStatsEmbed(embed.description);
+                                                await updateUserStats(matchedUserId, parsedStats, uniqueId); // Pass the unique ID
+                                                const savedEmbed = new EmbedBuilder()
+                                                    .setTitle("Snapshot Saved")
+                                                    .setDescription(`**Date:** ${formatDateTime()}\n**Time:** ${formatTimestamp()}\n`) // Remember to add matching id
+                                                    .setColor('#FEFFA3')
+                                                    .setFooter({ text: `Saved by ${user.username}`, iconURL: user.displayAvatarURL() });
                                     
-                                            const row = new ActionRowBuilder()
-                                                .addComponents(
-                                                    new ButtonBuilder()
-                                                        .setCustomId('view_snapshots')
-                                                        .setLabel('Snapshots')
-                                                        .setStyle(ButtonStyle.Primary)
-                                                );
+                                                const row = new ActionRowBuilder()
+                                                    .addComponents(
+                                                        new ButtonBuilder()
+                                                            .setCustomId('view_snapshots')
+                                                            .setLabel('DataSaves')
+                                                            .setStyle(ButtonStyle.Primary)
+                                                    );
                                     
-                                            await i.update({ embeds: [savedEmbed], components: [row] });
-                                        } else if (i.customId === 'confirm_no') {
-                                            await i.update({ content: "Snapshot saving cancelled.", components: [], embeds: [] });
+                                                await i.update({ embeds: [savedEmbed], components: [row] });
+                                            } else if (i.customId === 'confirm_no') {
+                                                await i.update({ content: "Snapshot saving cancelled.", components: [], embeds: [] });
+                                            }
+                                        } catch (error) {
+                                            console.error('Error updating interaction:', error);
+                                            if (error.code === 10062) {
+                                                await i.followUp({ content: 'This interaction has expired. Please try again.', ephemeral: true });
+                                            } else {
+                                                await i.followUp({ content: 'An error occurred while processing your response.', ephemeral: true });
+                                            }
                                         }
                                     });
-                                                
+                                    
                                     buttonCollector.on('end', collected => {
                                         if (collected.size === 0) {
-                                            confirmMessage.edit({ content: "No action taken.", components: [], embeds: [] });
+                                            confirmMessage.edit({ content: "No action taken.", components: [], embeds: [] }).catch(console.error);
                                         }
                                     });
                                 } else {

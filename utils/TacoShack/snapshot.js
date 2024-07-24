@@ -8,10 +8,49 @@ function formatTimestamp(timestamp) {
     return `<t:${unixTimestamp}:F>`;
 }
 
-// Function to generate a page embed for snapshots
-function generatePageEmbed(userStats, page, pageSize) {
-    // Sort snapshots by timestamp (oldest first)
-    userStats.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+// Function to find the closest data save entries to specific time differences
+function findRecommendedSorts(latestSave, userStats) {
+    const oneDayMin = 20 * 60 * 60 * 1000;
+    const oneDayMax = 28 * 60 * 60 * 1000;
+    const oneWeekMin = 6 * 24 * 60 * 60 * 1000;
+    const oneWeekMax = 8 * 24 * 60 * 60 * 1000;
+    const oneMonthMin = 28 * 24 * 60 * 60 * 1000;
+    const oneMonthMax = 34 * 24 * 60 * 60 * 1000;
+
+    let closestDay, closestWeek, closestMonth;
+    let minDayDiff = Infinity, minWeekDiff = Infinity, minMonthDiff = Infinity;
+
+    userStats.forEach(snapshot => {
+        const timeDiff = Math.abs(new Date(latestSave.timestamp) - new Date(snapshot.timestamp));
+
+        if (timeDiff >= oneDayMin && timeDiff <= oneDayMax && timeDiff < minDayDiff) {
+            minDayDiff = timeDiff;
+            closestDay = snapshot;
+        }
+
+        if (timeDiff >= oneWeekMin && timeDiff <= oneWeekMax && timeDiff < minWeekDiff) {
+            minWeekDiff = timeDiff;
+            closestWeek = snapshot;
+        }
+
+        if (timeDiff >= oneMonthMin && timeDiff <= oneMonthMax && timeDiff < minMonthDiff) {
+            minMonthDiff = timeDiff;
+            closestMonth = snapshot;
+        }
+    });
+
+    return { closestDay, closestWeek, closestMonth };
+}
+
+// Function to generate a page embed for DataSaves
+function generatePageEmbed(userStats, page = 0, pageSize = 10, interaction) {
+    // Ensure userStats is an array
+    if (!Array.isArray(userStats)) {
+        userStats = [];
+    }
+
+    // Sort DataSaves by timestamp (newest first)
+    userStats.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     const totalPages = Math.ceil(userStats.length / pageSize);
     const start = page * pageSize;
@@ -19,14 +58,42 @@ function generatePageEmbed(userStats, page, pageSize) {
 
     const pageData = userStats.slice(start, end);
     const description = pageData.length > 0
-        ? pageData.map(snapshot => `**ID:** ${snapshot.id}\n**Timestamp:** ${formatTimestamp(snapshot.timestamp)}`).join('\n\n')
-        : 'No snapshots available.';
+        ? pageData.map((snapshot, index) => `**ID:** ${snapshot.id} - **Timestamp:** ${formatTimestamp(snapshot.timestamp)}`).join('\n\n')
+        : 'No datasaves available.';
 
-    return new EmbedBuilder()
-        .setTitle('Snapshots')
+    const embed = new EmbedBuilder()
+        .setTitle(`DataSaves for ${interaction.user.username}`)
         .setDescription(description)
-        .setFooter({ text: `Page ${page + 1} of ${totalPages || 1}` })
+        .setFooter({ text: `Page ${page + 1} of ${totalPages || 1}`, iconURL: interaction.user.displayAvatarURL() })
         .setColor('#FEFFA3');
+
+    // Add Recommended Sorts if this is the first page
+    if (page === 0 && userStats.length > 0) {
+        const latestSave = userStats[0];
+        const { closestDay, closestWeek, closestMonth } = findRecommendedSorts(latestSave, userStats);
+
+        let recommendedSortsDescription = '';
+
+        if (closestDay) {
+            recommendedSortsDescription += `**1. ${latestSave.id} vs ${closestDay.id}**\n`;
+        }
+
+        if (closestWeek) {
+            recommendedSortsDescription += `**2. ${latestSave.id} vs ${closestWeek.id}**\n`;
+        }
+
+        if (closestMonth) {
+            recommendedSortsDescription += `**3. ${latestSave.id} vs ${closestMonth.id}**\n`;
+        }
+
+        if (!recommendedSortsDescription) {
+            recommendedSortsDescription = 'None';
+        }
+
+        embed.addFields({ name: 'Recommended Sorts', value: recommendedSortsDescription });
+    }
+
+    return embed;
 }
 
 // Function to create action row with pagination buttons
@@ -51,13 +118,16 @@ module.exports = {
         client.on('interactionCreate', async interaction => {
             if (!interaction.isButton()) return;
 
-            if (interaction.customId === 'view_snapshots') {
+            if (interaction.customId === 'view_snapshots' || interaction.customId === 'prev_page' || interaction.customId === 'next_page') {
                 const userId = interaction.user.id;
                 try {
+                    await interaction.deferUpdate(); // Defers the update to give us more time
+
                     const userStats = await db.get(`shackData.${userId}.stats`) || [];
+                    console.log(`Fetched user stats for user ${userId}:`, userStats);
 
                     if (userStats.length === 0) {
-                        await interaction.reply({ content: 'You have no snapshots available.', ephemeral: false });
+                        await interaction.reply({ content: 'You have no DataSaves available.', ephemeral: true });
                         return;
                     }
 
@@ -65,40 +135,36 @@ module.exports = {
                     let currentPage = 0;
                     const totalPages = Math.ceil(userStats.length / pageSize);
 
+                    if (interaction.message && interaction.message.embeds && interaction.message.embeds.length > 0) {
+                        const footerText = interaction.message.embeds[0].footer.text;
+                        const currentPageMatch = footerText.match(/Page (\d+) of/);
+                        if (currentPageMatch) {
+                            currentPage = parseInt(currentPageMatch[1], 10) - 1;
+                        }
+                    }
+
+                    if (interaction.customId === 'prev_page' && currentPage > 0) {
+                        currentPage--;
+                    } else if (interaction.customId === 'next_page' && currentPage < totalPages - 1) {
+                        currentPage++;
+                    }
+
                     const row = createActionRow(currentPage, totalPages);
+                    const newEmbed = generatePageEmbed(userStats, currentPage, pageSize, interaction);
 
-                    const initialMessage = await interaction.reply({
-                        embeds: [generatePageEmbed(userStats, currentPage, pageSize)],
-                        components: [row],
-                        ephemeral: false
+                    await interaction.editReply({
+                        embeds: [newEmbed],
+                        components: [row]
                     });
-
-                    const buttonCollector = initialMessage.createMessageComponentCollector({ time: 60000 });
-
-                    buttonCollector.on('collect', async i => {
-                        if (i.customId === 'prev_page' && currentPage > 0) {
-                            currentPage--;
-                        } else if (i.customId === 'next_page' && currentPage < totalPages - 1) {
-                            currentPage++;
-                        }
-
-                        const row = createActionRow(currentPage, totalPages);
-
-                        await i.update({
-                            embeds: [generatePageEmbed(userStats, currentPage, pageSize)],
-                            components: [row]
-                        });
-                    });
-
-                    buttonCollector.on('end', collected => {
-                        if (collected.size === 0) {
-                            initialMessage.edit({ components: [] }).catch(console.error);
-                        }
-                    });
-
                 } catch (error) {
-                    console.error('Error handling snapshot button:', error);
-                    await interaction.reply({ content: 'An error occurred while fetching your snapshots.', ephemeral: true });
+                    console.error('Error updating interaction:', error);
+                    if (!interaction.replied && !interaction.deferred) {
+                        try {
+                            await interaction.followUp({ content: 'An error occurred while processing your response.', ephemeral: true });
+                        } catch (followUpError) {
+                            console.error('Error following up interaction:', followUpError);
+                        }
+                    }
                 }
             }
         });

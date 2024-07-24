@@ -47,7 +47,7 @@ const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder } = require('
       // Prepare the output for each upgrade purchased
       const purchases = upgrades.filter(u => u.purchased > 0)
                                 .sort((a, b) => a.multiplier - b.multiplier) // Sort by multiplier in ascending for clarity
-                                .map(u => `${u.name}: ${u.purchased} times`);
+                                .map(u => `**${u.name}:** ${u.purchased}`);
   
       return {
           purchases,
@@ -128,11 +128,12 @@ const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder } = require('
         if (operation === 'estimate_prestige') {
           const availablePoints = input;
           const result = calculateWithCaps(upgrades, availablePoints);
-          description = ("Selected Upgrades:\n", result.purchases.join("\n"));
-          description += (`\nBusiness Caps Purchased: ${result.businessCapsPurchased}`);
-          description += (`\nFinal Total Multiplier: ${result.finalTotalMultiplier}`);
-          description += (`\nRemaining Points: ${result.remainingPoints}`);
-          
+          description = `**Total Points:** \`${availablePoints.toLocaleString('en-US')}\`\n`;
+          description += ("Selected Upgrades:\n", result.purchases.join("\n"));
+          description += (`\n\n**🧢 Multiplier Caps:** ${result.businessCapsPurchased}`);
+          description += (`\n**📈 Final Total Multiplier:** ${result.finalTotalMultiplier}x`);
+          description += (`\n**💠 Remaining Points:** ${result.remainingPoints.toLocaleString('en-US')}`);
+
 
               
 
@@ -185,10 +186,11 @@ const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder } = require('
           }
           
         const responseEmbed = new EmbedBuilder()
-        .setTitle("Calculation Result")
-        .setColor('#32CD32')
+        .setTitle("📝 Prestige Multiplier Calculator")
+        .setColor('#FF7F7F')
         .setDescription(description)
-        .setTimestamp();
+        .setTimestamp()
+        .setFooter({ text: `${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
 
         await interaction.reply({ embeds: [responseEmbed] });
     }

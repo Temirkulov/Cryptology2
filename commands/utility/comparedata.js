@@ -181,7 +181,7 @@ function safeAccess(obj, key) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('comparedata')
-        .setDescription('Compare data between two snapshots.')
+        .setDescription('Compare data between two DataSaves.')
         .addStringOption(option =>
             option.setName('id1')
                 .setDescription('First snapshot ID (newer)')
@@ -204,20 +204,20 @@ module.exports = {
         }
 
         try {
-            // Retrieve user snapshots from the database
+            // Retrieve user DataSaves from the database
             const userStats = await db.get(`shackData.${userId}.stats`);
             if (!userStats || userStats.length === 0) {
-                await interaction.reply({ content: 'Error: No snapshots found for your account.', ephemeral: true });
+                await interaction.reply({ content: 'Error: No DataSaves found for your account.', ephemeral: true });
                 return;
             }
 
-            // Find the snapshots by ID
+            // Find the DataSaves by ID
             let snapshot1 = userStats.find(snapshot => snapshot.id === id1);
             let snapshot2 = userStats.find(snapshot => snapshot.id === id2);
 
-            // Check if both snapshots exist
+            // Check if both DataSaves exist
             if (!snapshot1 || !snapshot2) {
-                await interaction.reply({ content: 'Error: One or both snapshot IDs do not exist.', ephemeral: true });
+                await interaction.reply({ content: 'Error: One or both DataSaves IDs do not exist.', ephemeral: true });
                 return;
             }
 
@@ -324,8 +324,8 @@ module.exports = {
 
             await interaction.reply({ embeds: [compareEmbed], ephemeral: false });
         } catch (error) {
-            console.error('Error comparing snapshots:', error);
-            await interaction.reply({ content: 'An error occurred while comparing snapshots. Please try again later.', ephemeral: false });
+            console.error('Error comparing DataSaves:', error);
+            await interaction.reply({ content: 'An error occurred while comparing DataSaves. Please try again later.', ephemeral: false });
         }
     }
 };

@@ -24,7 +24,7 @@ module.exports = {
             .setTitle('Bot Information')
             .addFields(
                 { name: ':bar_chart: Bot Statistics', value: `**Servers**: ${interaction.client.guilds.cache.size}\n**Users**: ${interaction.client.users.cache.size}\n**Channels**: ${interaction.client.channels.cache.size}`, inline: false },
-                { name: ':page_facing_up: Bot Information', value: `**Creator**: kulovich\n**Original Creator**: ocryptic\n**Contributors**: gegeberry\n**Version**: 1.0\n**Lines of Code**: ${totalLinesOfCode}`, inline: false },
+                { name: ':page_facing_up: Bot Information', value: `**Creator**:\nkulovich\n**Original Creator**:\nocryptic\n**Contributors**:\ngegeberry\ninnerblu\n**Version**: 1.0\n**Lines of Code**: ${totalLinesOfCode}`, inline: false },
                 { name: ':computer: Hosting Information', value: `**Memory Usage**: ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB\n**RAM**: ${(os.totalmem() / 1024 / 1024).toFixed(2)} MB\n**Uptime**: ${formatUptime(Math.floor(process.uptime()))}\n**Node.js**: ${process.version}\n**Discord.js**: ${require('discord.js').version}\n**Operating System**: ${os.type()} ${os.release()}`, inline: false }
                 );
 

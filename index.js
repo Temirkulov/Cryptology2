@@ -31,14 +31,16 @@ const tacoShackReactionListener = require('./utils/TacoShack/ReactionListener');
 //message listeners path
 const idleCapListeners = require('./utils/IdleCap/Listener');
 const tacoShackListeners = require('./utils/TacoShack/Listener');
+// const setupListeners = require('./utils/TacoShack/setupListener');
 
 // Use the listener functions
 //reaction listeners
 // idleCapReactionListener.handleIdleCapReactionAdd(client);
 tacoShackReactionListener.handleTacoShackReactionAdd(client);
+// setupListeners.setupListeners(client);
 //message listeners
 // idleCapListeners.handleIdleCapMessageCreate(client);
-// idleCapListeners.handleIdleCapMessageUpdate(client);
+idleCapListeners.handleIdleCapMessageUpdate(client);
 tacoShackListeners.handleTacoShackMessageCreate(client);
 tacoShackListeners.handleTacoShackMessageUpdate(client);
 
@@ -84,6 +86,22 @@ client.once(Events.ClientReady, readyClient => {
     handleProfileDataCollection(client);
     handleProfileDataDisplay(client);
     
+});
+client.on('guildCreate', async guild => {
+    let guildIds = await db.get('guilds') || [];
+    if (!guildIds.includes(guild.id)) {
+        guildIds.push(guild.id);
+        await db.set('guilds', guildIds);
+        console.log(`Added new guild to database: ${guild.id}`);
+    }
+});
+client.on('guildDelete', async guild => {
+    let guildIds = await db.get('guilds') || [];
+    if (guildIds.includes(guild.id)) {
+        guildIds = guildIds.filter(id => id !== guild.id);
+        await db.set('guilds', guildIds);
+        console.log(`Removed guild from database: ${guild.id}`);
+    }
 });
 
 
