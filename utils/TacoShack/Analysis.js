@@ -10,6 +10,7 @@ const expansionMapping = {
     beach: 'stand',
     amusement: 'attractions',
     mall: 'kiosk',
+    cantina: 'stage'
     // Add other locations as necessary
 };
 
@@ -64,6 +65,9 @@ async function prepareUpgradeRecommendationEmbed(userId, selectedLocation = null
         new StringSelectMenuOptionBuilder()
             .setLabel('Mall Shack')
             .setValue('mall'),
+            new StringSelectMenuOptionBuilder()
+            .setLabel('Cantina Shack')
+            .setValue('cantina'),
         new StringSelectMenuOptionBuilder()
             .setLabel('Beach Shack')
             .setValue('beach')

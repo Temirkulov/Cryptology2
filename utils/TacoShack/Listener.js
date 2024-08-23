@@ -25,6 +25,7 @@ function categorizeLocation(locationString) {
         "🌮 Taco Shack": "taco",
         "🏬 Mall Shack": "mall",
         "⛱ Beach Shack": "beach",
+        "🌵 Cantina Shack": "cantina"
     };
 
     // Attempt to match location string to one of the keywords
@@ -110,6 +111,7 @@ async function checkUserData(userId) {
 
 function categorizeEmbed(embedTitle) {
     if (embedTitle.includes("Hotdog Cart")) return "cart";
+    if (embedTitle.includes("Karaoke Stage")) return "stage";
     if (embedTitle.includes("Taco Truck")) return "truck";
     if (embedTitle.includes("Mall Kiosk")) return "kiosk";
     if (embedTitle.includes("Ice Cream Stand")) return "stand";
@@ -377,6 +379,17 @@ function formatDateTime() {
 function formatTimestamp() {
     const now = new Date();
     return now.toLocaleTimeString('en-US', { hour12: false });
+}
+function formatLargeNumber(number) {
+    if (number >= 1e9) {
+        return `$${(number / 1e9).toFixed(3)} bil`;
+    } else if (number >= 1e6) {
+        return `$${(number / 1e6).toFixed(3)} mil`;
+    } else if (number >= 1e3) {
+        return `$${(number / 1e3).toFixed(3)} thousand`;
+    } else {
+        return `$${number.toFixed(2)}`;
+    }
 }
 
 module.exports = {
@@ -856,9 +869,113 @@ module.exports = {
                 if (newMessage.embeds.length > 0) {
                     const updatedEmbed = newMessage.embeds[0];
                     console.log(`Updated Embed: ${updatedEmbed || 'NA'}`);
-                    const validTitles = ["Upgrades", "Employees", "Decorations", "Advertisements", "Taco Truck Upgrades", "Mall Kiosk Upgrades", "Ice Cream Stand Upgrades", "Amusement Park Attractions", "Hotdog Cart Upgrades"];
+                    const validTitles = ["Upgrades", "Employees", "Decorations", "Advertisements", "Taco Truck Upgrades", "Mall Kiosk Upgrades", "Ice Cream Stand Upgrades", "Amusement Park Attractions", "Hotdog Cart Upgrades", "Karaoke Stage Upgrades"];
                     const firstField = updatedEmbed.fields[0];
                     console.log(updatedEmbed.fields);
+                    // const title = updatedEmbed.title || '';
+                    const author = updatedEmbed.author ? updatedEmbed.author.name : '';
+                    // const description = updatedEmbed.description || '';
+
+                    // Balances Listener start
+                    if (author.includes('Balances |')) {
+                        // Extract fields and values
+                        const fields = updatedEmbed.fields || [];
+                        const extractedValues = fields.map(field => ({
+                            location: field.name,
+                            value: parseFloat(field.value.replace(/[\$,]/g, ''))
+                        }));
+
+                        if (fields.length > 0) {
+                            // Calculate total value
+                            const totalValue = extractedValues.reduce((acc, item) => acc + item.value, 0);
+                            const formattedTotalValue = `$${totalValue.toLocaleString('en-US')}`;
+                            const formattedAmount = formatLargeNumber(totalValue);
+
+                            // React to the message
+                            await newMessage.react('<:CH_IconTickRed:1270432786766889002>'); // Use the specified emoji
+                            console.log('Reacted to the message with the fields.');
+
+                            // Listen for reaction
+                            const filter = (reaction, user) => {
+                                return reaction.emoji.name === 'CH_IconTickRed' && !user.bot;
+                            };
+
+                            const collector = newMessage.createReactionCollector({ filter, time: 60000 });
+
+                            collector.on('collect', async (reaction, user) => {
+                                const description = `**Locations:** ${fields.length}\n**Total Value:** ${formattedTotalValue}\n**Amount:** ${formattedAmount}`;
+                                const responseEmbed = new EmbedBuilder()
+                                    .setTitle("__**Total Calculation**__")
+                                    .setColor('#FF7F7F')
+                                    .setDescription(description)
+                                    .setTimestamp()
+                                    .setFooter({ text: `${user.username}`, iconURL: user.displayAvatarURL() });
+
+                                await newMessage.channel.send({ embeds: [responseEmbed] });
+                                collector.stop();
+
+                                // Check for whitelisted user reaction
+                                const whitelist = await db.get('whitelist') || [];
+                                if (whitelist.includes(user.id)) {
+                                    await newMessage.react('<:CH_IconTickBlurple:1271201691772911618>'); // React with another specified emoji for whitelisted user
+
+                                    // Listen for the purple tick reaction
+                                    const whitelistFilter = (reaction, user) => {
+                                        return reaction.emoji.name === 'CH_IconTickBlurple' && whitelist.includes(user.id) && !user.bot;
+                                    };
+
+                                    const whitelistCollector = newMessage.createReactionCollector({ filter: whitelistFilter, time: 60000 });
+
+                                    whitelistCollector.on('collect', async (reaction, user) => {
+                                        // Save the balances for the whitelisted user
+                                        await db.set(`balances_${user.id}`, { fields, totalValue });
+
+                                        // Calculate totals for all whitelisted users
+                                        const allWhitelisted = await db.get('whitelist') || [];
+                                        let totalWhitelistedValue = 0;
+                                        let userBalancesList = [];
+
+                                        for (const userId of allWhitelisted) {
+                                            const userBalance = await db.get(`balances_${userId}`);
+                                            if (userBalance) {
+                                                totalWhitelistedValue += userBalance.totalValue;
+                                                const userInfo = await client.users.fetch(userId);
+                                                userBalancesList.push(`${userInfo.username}: $${userBalance.totalValue.toLocaleString('en-US')}`);
+                                            }
+                                        }
+
+                                        const totalFormattedValue = `$${totalWhitelistedValue.toLocaleString('en-US')}`;
+                                        const totalFormattedAmount = formatLargeNumber(totalWhitelistedValue);
+
+                                        const totalResponseEmbed = new EmbedBuilder()
+                                            .setTitle("__**Total Whitelisted Calculation**__")
+                                            .setColor('#7F7FFF')
+                                            .setDescription(
+                                                `**Total Value of All Whitelisted Users:** ${totalFormattedValue}\n` +
+                                                `**Total Amount:** ${totalFormattedAmount}\n\n` +
+                                                `**Individual Balances:**\n${userBalancesList.join('\n')}`
+                                            )
+                                            .setTimestamp()
+                                            .setFooter({ text: `${user.username}`, iconURL: user.displayAvatarURL() });
+
+                                        await newMessage.channel.send({ embeds: [totalResponseEmbed] });
+                                        whitelistCollector.stop();
+                                    });
+
+                                    whitelistCollector.on('end', collected => {
+                                        console.log(`Collected ${collected.size} whitelist reactions.`);
+                                    });
+                                }
+                            });
+
+                            collector.on('end', collected => {
+                                console.log(`Collected ${collected.size} reactions.`);
+                            });
+                        }
+                    }
+
+                    // Balances Embed End
+
                     if (validTitles.some(title => updatedEmbed.title && updatedEmbed.title.includes(title))) {
                         // console.log("Embed title does not match the required criteria.");
                         // return; // Exit if none of the keywords are found in the title

@@ -195,6 +195,44 @@
         "coaster": { "max0": 10, "max1": 10, "max2": 10, "max3": 10,"max": 10,"initialPrice": 750000, "boost": 2000 },
         "ferris": { "max0": 1, "max1": 1, "max2": 1, "max3": 1, "max": 1,"initialPrice": 50000000, "boost": 6000 }
     }
+      }, "cantina": {
+        "expansionLevels":6,
+        "expansion" : 7500000,
+        "upgrades": {
+        "paint": { "max0": 10, "max1": 20, "max2": 30, "max3": 35, "max": 50,"initialPrice": 250, "boost": 10 },
+        "furniture": {"max0": 10, "max1": 18, "max2": 25,  "max3": 30,"max": 45,"initialPrice": 600, "boost": 20 },
+        "bathrooms": { "max0": 8, "max1": 15, "max2": 25,  "max3": 30,"max": 45,"initialPrice": 800, "boost": 25 },
+        "billboard": { "max0": 10, "max1": 15, "max2": 20,  "max3": 25,"max": 45,"initialPrice": 1000, "boost": 35 },
+        "appliances": { "max0": 8, "max1": 15, "max2": 25,  "max3": 30,"max": 30,"initialPrice": 1200, "boost": 0 },
+        "tipjar": {"max0": 8, "max1": 15, "max2": 30, "max3": 35, "max": 35,"initialPrice": 500, "boost": 0 }
+    }, "hire": {
+        "dishwasher": { "max0": 10, "max1": 35, "max2": 30, "max3": 35, "max": 50,"initialPrice": 250, "boost": 10 },
+        "cashier": { "max0": 10, "max1": 35, "max2": 30, "max3": 35, "max": 50,"initialPrice": 250, "boost": 10 },
+        "server": { "max0": 10, "max1": 20, "max2": 30, "max3": 35, "max": 50,"initialPrice": 600, "boost": 20 },
+        "bartender": { "max0": 10, "max1": 20, "max2": 30, "max3": 35, "max": 55,"initialPrice": 1000, "boost": 35 },
+        "sous": { "max0": 10, "max1": 20, "max2": 30, "max3": 35, "max": 50,"initialPrice": 1200, "boost": 40 },
+        "head": { "max0": 8, "max1": 16, "max2": 25, "max3": 30, "max": 45,"initialPrice": 2000, "boost": 65 },
+        "manager": { "max0": 8, "max1": 15, "max2": 30, "max3": 35, "max": 50,"initialPrice": 5000, "boost": 150 }
+    }, "decorations": {
+        "barstools": { "max0": 10, "max1": 20, "max2": 30, "max3": 40, "max": 70,"initialPrice": 175, "boost": 5 },
+        "skulls": { "max0": 8, "max1": 15, "max2": 30, "max3": 35, "max": 55,"initialPrice": 650, "boost": 15 },
+        "coasters": { "max0": 5, "max1": 10, "max2": 25, "max3": 30, "max": 50,"initialPrice": 2750, "boost": 30 },
+        "tiles": { "max0": 1, "max1": 3, "max2": 5, "max3": 5, "max": 30,"initialPrice": 50000, "boost": 80 },
+        "mirrors": { "max0": 1, "max1": 2, "max2": 3, "max3": 4, "max": 18,"initialPrice": 1000000, "boost": 450 }
+    }, "advertisements": {
+        "newspaper": { "max0": 10, "max1": 15, "max2": 30, "max3": 35, "max": 50,"initialPrice": 350, "boost": 10 },
+        "radio": { "max0": 8, "max1": 15, "max2": 25, "max3": 35, "max": 45,"initialPrice": 650, "boost": 20 },
+        "email": { "max0": 6, "max1": 15, "max2": 25, "max3": 35, "max": 45,"initialPrice": 1000, "boost": 30 },
+        "internet": { "max0": 5, "max1": 10, "max2": 30, "max3": 35, "max": 50,"initialPrice": 2000, "boost": 50 },
+        "tv": { "max0": 2, "max1": 5, "max2": 10, "max3": 30,"max": 35,"initialPrice": 5500, "boost": 160 },
+        "blimp": { "max0": 1, "max1": 2, "max2": 3, "max3": 5, "max": 6,"initialPrice": 250000, "boost": 200 }
+    }, "stage": {
+        "discolights": { "max0": 20, "max1": 20, "max2": 20, "max3": 20, "max": 30,"initialPrice": 8000, "boost": 50 },
+        "sound": { "max0": 15, "max1": 15, "max2": 15, "max3": 15, "max": 25,"initialPrice": 12500, "boost": 110 },
+        "spotlight": { "max0": 10, "max1": 10, "max2": 10, "max3": 10, "max": 20,"initialPrice": 40000, "boost": 260 },
+        "microphones": { "max0": 5, "max1": 5, "max2": 5,  "max3": 5,"max": 15,"initialPrice": 200000, "boost": 420 },
+        "lyrics": { "max0": 10, "max1": 10, "max2": 10, "max3": 10,"max": 10,"initialPrice": 800000, "boost": 750 },
+        "pyrotechnics": { "max0": 1, "max1": 1, "max2": 1, "max3": 1, "max": 1,"initialPrice": 10000000, "boost": 1500 }
       }
     },
     "hq": {
@@ -213,4 +251,5 @@
         }
     }
   }
+}
   

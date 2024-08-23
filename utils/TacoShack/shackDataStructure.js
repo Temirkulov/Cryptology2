@@ -218,6 +218,49 @@ const defaultShackData = {
             ferris: 0,
 
         } },
+        cantina: { info: {
+            expansion: false,
+        }, upgrades: {
+            paint: 0,
+            furniture: 0,
+            bathrooms: 0,
+            billboard: 0,
+            appliances: 0,
+            tipjar: 0,
+
+        }, hire: {
+            dishwasher: 0,
+            cashier: 0,
+            server: 0,
+            bartender: 0,
+            sous: 0,
+            head: 0,
+            manager: 0,
+
+        }, decorations: {
+            barstools: 0,
+            skulls: 0,
+            coasters: 0,
+            tiles: 0,
+            mirrors: 0,
+
+        }, advertisements: {
+            newspaper: 0,
+            radio: 0,
+            email: 0,
+            internet: 0,
+            tv: 0,
+            blimp: 0,
+
+        }, stage: {
+            discolights: 0,
+            sound: 0,
+            spotlight: 0,
+            microphones: 0,
+            lyrics: 0,
+            pyrotechnics: 0,
+
+        } },
     },
     hq: {
         info: {

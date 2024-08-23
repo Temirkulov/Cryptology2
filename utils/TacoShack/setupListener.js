@@ -10,6 +10,7 @@ const locationMapping = {
     "⛱ Beach Shack": "beach",
     "🎢 Amusement Park Shack": "amusement",
     "🏙 City Shack": "city",
+    "🌵 Cantina Shack": "cantina",
     "🏛 HQ Balance": "hq"
 };
 

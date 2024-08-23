@@ -53,18 +53,18 @@ function calculateWithCaps(upgrades, availablePoints) {
 
     // Prepare the commands in the specified order
     const upgradeCommands = [
-        ...upgrades.filter(u => u.name === "5% Multiplier").map(u => `/buy multiplier multiplier:${u.name} quantity:${u.purchased}`),
-        ...upgrades.filter(u => u.name === "15% Multiplier").map(u => `/buy multiplier multiplier:${u.name} quantity:${u.purchased}`),
-        ...upgrades.filter(u => u.name === "30% Multiplier").map(u => `/buy multiplier multiplier:${u.name} quantity:${u.purchased}`),
-        ...upgrades.filter(u => u.name === "50% Multiplier").map(u => `/buy multiplier multiplier:${u.name} quantity:${u.purchased}`),
-        ...upgrades.filter(u => u.name === "100% Multiplier").map(u => `/buy multiplier multiplier:${u.name} quantity:${u.purchased}`)
+        ...upgrades.filter(u => u.name === "5% Multiplier").map(u => `/buy multiplier multiplier:+${u.name} quantity:${u.purchased}`),
+        ...upgrades.filter(u => u.name === "15% Multiplier").map(u => `/buy multiplier multiplier:+${u.name} quantity:${u.purchased}`),
+        ...upgrades.filter(u => u.name === "30% Multiplier").map(u => `/buy multiplier multiplier:+${u.name} quantity:${u.purchased}`),
+        ...upgrades.filter(u => u.name === "50% Multiplier").map(u => `/buy multiplier multiplier:+${u.name} quantity:${u.purchased}`),
+        ...upgrades.filter(u => u.name === "100% Multiplier").map(u => `/buy multiplier multiplier:+${u.name} quantity:${u.purchased}`)
     ];
 
     return {
         purchases,
         businessCapsPurchased: capsPurchased,
         finalTotalMultiplier: totalMultiplier.toFixed(2),
-        remainingPoints: points.toFixed(2),
+        remainingPoints: points.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}),
         upgradeCommands
     };
 }

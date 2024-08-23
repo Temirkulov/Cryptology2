@@ -9,6 +9,7 @@ const expansionMapping = {
     beach: 'stand',
     amusement: 'attractions',
     mall: 'kiosk',
+    cantina: 'stage'
     // Add other locations as necessary
 };
 
@@ -335,7 +336,8 @@ function beautifyLocation(activeLocationKey) {
         amusement: "🎢 Amusement Park Shack",
         taco: "🌮 Taco Shack",
         mall: "🏬 Mall Shack",
-        beach: "⛱ Beach Shack"
+        beach: "⛱ Beach Shack",
+        cantina: "🌵 Cantina Shack"
     };
     
     // Return the beautified version if found, else default to the key itself
@@ -347,7 +349,8 @@ function beautifyAllLocations(locations) {
         amusement: "🎢 Amusement Park Shack",
         taco: "🌮 Taco Shack",
         mall: "🏬 Mall Shack",
-        beach: "⛱ Beach Shack"
+        beach: "⛱ Beach Shack",
+        cantina: "🌵 Cantina Shack"
     };
 
     if (!locations || Object.keys(locations).length === 0) {
@@ -507,7 +510,7 @@ module.exports = {
         console.log("User is not part of any franchise. Setting income to 0.");
     }
         const embed = new EmbedBuilder()
-        .setColor('#FFB6C1')
+        .setColor('#FF7F7F')
         .setTitle(`${userData.info.username || 'User'}'s Profile Report`)
         .setDescription("Profile Report")
         .setThumbnail(interaction.user.displayAvatarURL())
@@ -525,7 +528,8 @@ module.exports = {
                        `**Maxed Income**: $${incomeDetails.currentMaxedIncome.toLocaleString()}\n` +
                        `**Achieved Max Income**: ${incomeDetails.achievedMaxIncomestring}\n`,
                 inline: false
-            },
+            }
+            ,
             {
                 name: '📝 Other Locations',
                 value: `**Locations Unlocked**: ${await calculateLocationsUnlocked(userData)}\n` +

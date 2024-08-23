@@ -3,6 +3,8 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { QuickDB } = require("quick.db");
 const db = new QuickDB();
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+const { defaultShackData } = require('../../utils/TacoShack/shackDataStructure');
+
 const {
     // categorizeLocation,
     categorizeEmbed,
@@ -19,6 +21,8 @@ function categorizeLocation(locationString) {
         "Taco Shack": "taco",
         "Mall Shack": "mall",
         "Beach Shack": "beach",
+        "Cantina Shack": "cantina"
+
     };
 
     // Attempt to match location string to one of the keywords
@@ -40,6 +44,8 @@ function categorizeLocationAndExpansion(locationString) {
         "Taco Shack": {location: "taco", expansionEmoji: "🚚"},
         "Mall Shack": {location: "mall", expansionEmoji: "🛒"},
         "Beach Shack": {location: "beach", expansionEmoji: "🍦"},
+        "Cantina Shack": {location: "cantina", expansionEmoji: "🌵"}
+
     };
 
     let categorizedLocation = "Unknown Location";
@@ -176,27 +182,32 @@ module.exports = {
                                     shackData.info.activeLocation = categorizedLocation;
                                     shackData.location[categorizedLocation].info.expansion = expansion;
                                     break;
-                                    case 'Shack Name':
-                                        // Remove leading red triangle and parentheses
-                                        let shackNameWithTriangle = field.value.trim();
-                                        let shackName = shackNameWithTriangle.replace(/^🔺\s*/, '').split(' (')[0].trim(); // Remove 🔺 and extract name before parenthesis
-                                    
-                                        // Extract active location
-                                        const activeLocation2 = categorizeLocation(embed.fields[2].value);
-                                        console.log(activeLocation2);
-                                        const locationKey = activeLocation2.toLowerCase(); // Ensure this matches your object keys accurately
-                                    
-                                        // Count taco emojis in the value string
-                                        const expansionLevel = (field.value.match(/🌮/g) || []).length;
-                                    
-                                        // Update shackData with extracted values
-                                        shackData.info.shackName = shackName;
-                                        console.log(shackData.info.shackName);
-                                        console.log(`location is ${shackData.location[locationKey]}`);
-                                        console.log(`info is ${shackData.location[locationKey].info}`);
-                                        shackData.location[locationKey].info.expansion = expansionLevel; // Assuming you want to store this as 'expansion'
-                                    
-                                        break;
+                                case 'Shack Name':
+                                    // Remove leading red triangle and parentheses
+                                    let shackNameWithTriangle = field.value.trim();
+                                    let shackName = shackNameWithTriangle.replace(/^🔺\s*/, '').split(' (')[0].trim(); // Remove 🔺 and extract name before parenthesis
+                                
+                                    // Extract active location
+                                    const activeLocation2 = categorizeLocation(embed.fields[2].value);
+                                    console.log(activeLocation2);
+                                    const locationKey = activeLocation2.toLowerCase(); // Ensure this matches your object keys accurately
+                                
+                                    // Initialize new location if it doesn't exist
+                                    if (!shackData.location[locationKey]) {
+                                        console.log(`Initializing new location: ${activeLocation2}`);
+                                        shackData.location[locationKey] = defaultShackData.location[locationKey]; // Initialize only the new location's data
+                                    }
+                                
+                                    // Count taco emojis in the value string
+                                    const expansionLevel = (field.value.match(/🌮/g) || []).length;
+                                
+                                    // Update shackData with extracted values
+                                    shackData.info.shackName = shackName;
+                                    console.log(shackData.info.shackName);
+                                    console.log(`location is ${shackData.location[locationKey]}`);
+                                    console.log(`info is ${shackData.location[locationKey].info}`);
+                                    shackData.location[locationKey].info.expansion = expansionLevel; // Assuming you want to store this as 'expansion'
+                                    break;
                                 case 'Franchise':
                                 case 'Franchise | Recruiter':
                                 case 'Franchise | Co-Owner':

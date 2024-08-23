@@ -65,7 +65,7 @@ function generatePageEmbed(interaction, userStats = [], page = 0, pageSize = 10)
     const embed = new EmbedBuilder()
         .setTitle(`DataSaves for ${interaction.user.username}`)
         .setDescription(description)
-        .setFooter({ text: `Page ${page + 1} of ${totalPages || 1}`, iconURL: interaction.user.displayAvatarURL() })
+        .setFooter({ text: `Page ${page + 1} of ${totalPages || 1} | Order from latest to oldest!`, iconURL: interaction.user.displayAvatarURL() })
         .setColor('#FEFFA3');
 
     // Add Recommended Sorts if this is the first page
@@ -76,15 +76,15 @@ function generatePageEmbed(interaction, userStats = [], page = 0, pageSize = 10)
         let recommendedSortsDescription = '';
 
         if (closestDay) {
-            recommendedSortsDescription += `**1. ${latestSave.id} vs ${closestDay.id}**\n`;
+            recommendedSortsDescription += `1. ${latestSave.id} **vs** ${closestDay.id}\n`;
         }
 
         if (closestWeek) {
-            recommendedSortsDescription += `**2. ${latestSave.id} vs ${closestWeek.id}**\n`;
+            recommendedSortsDescription += `2. ${latestSave.id} **vs** ${closestWeek.id}\n`;
         }
 
         if (closestMonth) {
-            recommendedSortsDescription += `**3. ${latestSave.id} vs ${closestMonth.id}**\n`;
+            recommendedSortsDescription += `3. ${latestSave.id} **vs** ${closestMonth.id}\n`;
         }
 
         if (!recommendedSortsDescription) {

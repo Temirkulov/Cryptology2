@@ -48,12 +48,12 @@ const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder } = require('
       const purchases = upgrades.filter(u => u.purchased > 0)
                                 .sort((a, b) => a.multiplier - b.multiplier) // Sort by multiplier in ascending for clarity
                                 .map(u => `**${u.name}:** ${u.purchased}`);
-  
       return {
           purchases,
           businessCapsPurchased: capsPurchased,
           finalTotalMultiplier: totalMultiplier.toFixed(2),
-          remainingPoints: points.toFixed(2)
+          remainingPoints: points.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})
+          
       };
   }
   
